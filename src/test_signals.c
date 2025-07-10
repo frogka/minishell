@@ -20,11 +20,11 @@ void	set_signal_actions(void)
 	sigaction(SIGINT, &act, NULL);
 }
 
-int	main(void)
-{
-	set_signal_actions();
+// int	main(void)
+// {
+// 	set_signal_actions();
 
-	while (1)
-		continue;
-	return (0);
-}
+// 	while (1)
+// 		continue;
+// 	return (0);
+// }

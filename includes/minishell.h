@@ -28,7 +28,7 @@ enum e_token_type
 	CHAR_INRED = '<',
 	CHAR_SPACE = ' ',
 	CHAR_TAB = '\t',
-	CHAR_SPACE = '\n',
+	CHAR_NEWLINE = '\n',
 	CHAR_NULL = 0,
 	CHAR_APPEND = 256,
 	CHAR_HEREDOC,

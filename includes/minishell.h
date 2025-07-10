@@ -1,6 +1,9 @@
+#ifndef MINISHELL_H
+#define MINISHELL_H
 #include <signal.h>
 #include <stdio.h>
 #include <strings.h>
+#include "../libft/libft.h"
 
 typedef	struct s_ast
 {
@@ -45,3 +48,5 @@ typedef struct s_lexer
 	t_token *first_token;
 	int		count_token;
 }	t_lexer;
+
+#endif

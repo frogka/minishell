@@ -76,86 +76,82 @@ t_token	*add_token_back(t_lexer *lexer, int len_input)
 	}
 }
 
+void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
+{
+	if (input[aux->i] == CHAR_PIPE || input[aux->i] == CHAR_OUTRED ||
+		input[aux->i] == CHAR_INRED || input[aux->i] == CHAR_AMPERSAND ||
+		input[aux->i] == CHAR_QM || input[aux->i] == CHAR_DOLLAR)
+	{
+		aux->curr_token->content[aux->j] = 0;
+		aux->j = 0;
+		aux->curr_token = add_token_back(lexer, aux->len_input);
+		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->type = input[aux->i];
+		aux->curr_token = add_token_back(lexer, aux->len_input);
+		(*f)++;
+	}
+}
+
+void	handle_def_2char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
+{
+	if (input[aux->i] == '>' && input[aux->i + 1] == '>' && (*f)++)
+		aux->curr_token->type = CHAR_APPEND;
+	else if (input[aux->i] == '<' && input[aux->i + 1] == '<' && (*f)++)
+		aux->curr_token->type = CHAR_HEREDOC;
+	else if (input[aux->i] == '&' && input[aux->i + 1] == '&' && (*f)++)
+		aux->curr_token->type = CHAR_AND;
+	else if (input[aux->i] == '|' && input[aux->i + 1] == '|' && (*f)++)
+		aux->curr_token->type = CHAR_OR;
+	if ((*f) == 1)
+	{
+		aux->curr_token->content[aux->j] = 0;
+		aux->j = 0;
+		aux->curr_token = add_token_back(lexer, aux->len_input);
+		aux->curr_token->content[aux->j] = input[(aux->i)++];
+		aux->curr_token->content[aux->j + 1] = input[aux->i];		
+	}
+}
+
+void	process_char(char *input, t_token_aux *aux, t_lexer *lexer)
+{
+	int	flag;
+
+	flag = 0;
+	handle_def_2char(input, aux, lexer, &flag);
+	handle_def_1char(input, aux, lexer, &flag);
+	if (flag == 0)
+	{
+		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->type = CHAR_DEF;
+		aux->j++;
+	}	
+}
+
 int	lexer_function(char *input, t_lexer *lexer)
 {
-	int		i;
-	int		j;
-	t_token *curr_token;
-	int	len_input;
+	t_token_aux	aux;
+	// int		status;
 	
-	i = 0;
-	j = 0;
-	len_input = ft_strlen(input);
-	// need to create first Token for malloc if there are no major errors is correct
+	aux.i = 0;
+	aux.j = 0;
+	aux.len_input = ft_strlen(input);
 	if(check_matching_quotes(input))
 		return (1);
 	if (!lexer)
 		return (1);
-	lexer->first_token = init_token(lexer->first_token, len_input);
-	curr_token = lexer->first_token;
+	lexer->first_token = init_token(lexer->first_token, aux.len_input);
+	aux.curr_token = lexer->first_token;
 	lexer->count_token++;
-	printf("%p\n",curr_token);
-	while (input[i])
-	{
-		printf("[%i]: %s\n", i, curr_token->content);
-		if (input[i] == '&' && input[i + 1] == '&')
-		{
-			curr_token->content[j] = 0;
-			j = 0;
-			curr_token = add_token_back(lexer, len_input);
-			curr_token->content[j] = input[i++];
-			curr_token->content[j + 1] = input[i];
-			curr_token->type = CHAR_AND;
-		}
-		else if (input[i] == '>' && input[i + 1] == '>')
-		{
-			curr_token->content[j] = 0;
-			j = 0;
-			curr_token = add_token_back(lexer, len_input);
-			curr_token->content = ft_substr(input, i, 2);
-			curr_token->type = CHAR_APPEND;
-			i++;
-		}
-		else if (input[i] == '<' && input[i + 1] == '<')
-		{
-			curr_token->content[j] = 0;
-			j = 0;
-			curr_token->next = add_token_back(lexer, len_input);
-			curr_token = curr_token->next;
-			curr_token->content = ft_substr(input, i, 2);
-			curr_token->type = CHAR_HEREDOC;
-			i++;
-		}
-		else if (input[i] == '|' && input[i + 1] == '|')
-		{
-			curr_token->content[j] = 0;
-			j = 0;
-			curr_token = add_token_back(lexer, len_input);
-			curr_token->content[j] = input[i++];
-			curr_token->content[j + 1] = input[i];
-			curr_token->type = CHAR_OR;
-			curr_token = add_token_back(lexer, len_input);
-		}
-		else if (input[i] == CHAR_PIPE || input[i] == CHAR_OUTRED || input[i] == CHAR_INRED || input[i] == CHAR_AMPERSAND || input[i] == CHAR_QM || input[i] == CHAR_DOLLAR)
-		{
-			curr_token->content[j] = 0;
-			j = 0;
-			curr_token = add_token_back(lexer, len_input);
-			curr_token->content[j] = input[i];
-			curr_token->type = input[i];
-			curr_token = add_token_back(lexer, len_input);
-		}
-		else if (input[i] == CHAR_SPACE || input[i] == CHAR_NEWLINE || input[i] == CHAR_TAB)
-		{
-			input[i];
-		}
-		else
-		{
-			curr_token->content[j] = input[i];
-			curr_token->type = CHAR_DEF;
-			j++;
-		}
-		i++;
+	printf("%p\n",aux.curr_token);
+	while (input[aux.i])
+	{		
+		printf("[%i]: %s\n", aux.i, aux.curr_token->content);
+		process_char(input, &aux, lexer);
+		// else if (input[i] == CHAR_SPACE || input[i] == CHAR_NEWLINE || input[i] == CHAR_TAB)
+		// {
+		// 	input[i];
+		// }
+		aux.i++;
 	}
 	return (0);
 }

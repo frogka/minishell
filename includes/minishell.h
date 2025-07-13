@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <strings.h>
 #include "../libft/libft.h"
+#define IN_QUOTES 1
+#define DEF 0
 
 typedef	struct s_ast
 {
@@ -48,5 +50,15 @@ typedef struct s_lexer
 	t_token *first_token;
 	int		count_token;
 }	t_lexer;
+
+typedef struct s_token_aux
+{
+	int	i;
+	int	j;
+	int	len_input;
+	t_token *curr_token;
+	int status;
+}	t_token_aux;
+
 
 #endif

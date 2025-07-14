@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <strings.h>
 #include "../libft/libft.h"
-#define IN_QUOTES 1
 #define DEF 0
 
 typedef	struct s_ast

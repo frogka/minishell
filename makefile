@@ -26,7 +26,7 @@ LIBFT = $(LIBFT_DIR)libft.a
 all: ${NAME}
 
 $(LIBFT):
-	make -C $(LIBFT_DIR)
+	make bonus -C $(LIBFT_DIR)
 
 # creating executables
 ${NAME}: $(LIBFT) $(OBJS_DIR) $(OBJS) 

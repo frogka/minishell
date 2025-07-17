@@ -1,5 +1,12 @@
 #include "../includes/minishell.h"
 
+t_global *global_struct(void)
+{
+	static t_global	global;
+
+	return (&global);
+}
+
 int	check_matching_quotes(char *input)
 {
 	int		i;
@@ -104,6 +111,23 @@ void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 		aux->curr_token->type = input[aux->i];
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 		(*f)++;
+	}
+}
+
+void	handle_quote_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
+{
+	if (*f == 0 && (input[aux->i] == CHAR_QM || input[aux->i] == CHAR_DOLLAR))
+	{
+		if (aux->j != 0)
+		{
+			aux->curr_token->content[aux->j] = 0;
+			aux->j = 0;
+			aux->curr_token = add_token_back(lexer, aux->len_input);
+		}
+		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->type = input[aux->i];
+		aux->curr_token = add_token_back(lexer, aux->len_input);
+		(*f) = 1; 
 	}
 }
 
@@ -214,6 +238,34 @@ void	process_char_quote(char *input, t_token_aux *aux, t_lexer *lexer)
 	}
 }
 
+/* add a new status code to get variables */
+void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer)
+{
+	int f;
+
+	f = 0;
+	if (input[aux->i] == '\\' && input[aux->i + 1] == CHAR_DQUOTE)
+	{
+		aux->curr_token->content[(aux->j)++] = input[aux->i + 1];
+		aux->i += 2;
+	}
+	if (input[aux->i] == aux->status)
+	{
+		aux->curr_token->content[aux->j] = 0;
+		aux->j = 0;
+		aux->status = DEF;
+		aux->curr_token = add_token_back(lexer, aux->len_input);
+		f = 1;
+	}
+	handle_quote_1char(input, aux, lexer, &f);
+	if (f == 0)
+	{
+		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->type = aux->status;
+		aux->j++;
+	}
+}
+
 int	check_only_terminal(char *input)
 {
 	int	i;
@@ -248,9 +300,9 @@ void	process_char(char *input, t_token_aux *aux, t_lexer *lexer)
 		if (aux->status == DEF)
 			process_char_def(input, aux, lexer);
 		else
-		{
 			process_char_quote(input, aux, lexer);
-		}
+		printf("[%i]: %s\t", aux->i, aux->curr_token->content);
+		printf("%i\n", aux->status);
 		aux->i++;
 	}
 }
@@ -267,6 +319,119 @@ void	clean_last_tokens(t_token_aux *aux, t_lexer *lexer)
 		aux->curr_token = get_previous_token(lexer->first_token, aux->curr_token);
 		aux->curr_token->next = NULL;
 		lexer->count_token--;
+	}
+}
+
+char	*find_ev(char *to_expand)
+{
+	t_global 	*global;
+	t_list		*ev_list;
+	char		*result;
+
+	global = global_struct();
+	ev_list = (*global->ev);
+	while (ev_list)
+	{
+		if (ft_strncmp(to_expand, (char *) ev_list->content, ft_strlen(to_expand)) == 0)
+		{
+			result = ft_substr((char *)ev_list->content,
+						ft_strlen(to_expand) + 1,
+						ft_strlen((char *)ev_list->content));
+			return (result);
+		}
+		ev_list = ev_list->next;
+	}
+	return (ft_strdup(""));
+}
+
+void	insert_expansion(t_token *token, int sta, int len, char *mid_str)
+{
+	char	*start_str;
+	char	*end_str;
+	char	*final_str;
+	int		len_str;
+	int		len_final;
+	int		i;
+	int		j;
+
+	len_str = ft_strlen(token->content);
+	start_str = ft_substr(token->content, 0, sta);
+	end_str = ft_substr(token->content, sta + len, len_str - (sta + len));
+
+	len_final = 0;
+	len_final += ft_strlen(start_str);
+	len_final += ft_strlen(mid_str);
+	len_final += ft_strlen(end_str);
+	final_str = malloc(sizeof(char) * (len_final + 1));
+
+	i = -1;
+	while (start_str[++i])
+		final_str[i] = start_str[i];
+	j = i;
+	i = -1;
+	while (mid_str[++i])
+		final_str[i + j] = mid_str[i];
+	j += i;
+	i = -1;
+	while (end_str[++i])
+		final_str[i + j] = end_str[i];
+	final_str[len_final] = 0;
+	free(start_str);
+	free(mid_str);
+	free(end_str);
+	free(token->content);
+	token->content = final_str;
+}
+
+void	token_expansion_aux(t_token *token)
+{
+	char		*temp;
+	char		*to_expand;
+	int			i;
+	int			j;
+	int			len;
+	t_global	*global;
+
+	i = 0;
+	j = 0;
+	global = global_struct();
+	while (token->content[i])
+	{
+		j = 0;
+		if (token->content[i] == CHAR_DOLLAR 
+				&& token->content[i + 1] != 0
+				&& token->content[i + 1] == '?')
+		{
+			temp = ft_itoa(global->exit_code);
+			len = ft_strlen(temp);
+			insert_expansion(token, i, len + 1, temp);
+		}
+		else if (token->content[i] == CHAR_DOLLAR 
+				&& token->content[i + 1] != 0
+				&& token->content[i + 1] != ' ')
+		{
+			while (token->content[i + 1 + j] != 0
+					&& token->content[i + 1 + j] != ' ')
+			{
+				j++;
+			}
+			temp = ft_substr(token->content, i + 1, j);
+			to_expand = find_ev(temp);
+			free(temp);
+			insert_expansion(token, i, j + 1, to_expand);
+		}
+		i++;
+	}
+}
+
+void	token_expansion(t_token_aux *aux, t_lexer *lexer)
+{
+	aux->curr_token = lexer->first_token;
+	while (aux->curr_token)
+	{
+		if (aux->curr_token->type == CHAR_DQUOTE)
+			token_expansion_aux(aux->curr_token);
+		aux->curr_token = aux->curr_token->next;
 	}
 }
 
@@ -287,17 +452,70 @@ int	lexer_function(char *input, t_lexer *lexer)
 	init_lexer_aux(input, &aux, lexer);
 	process_char(input, &aux, lexer);
 	clean_last_tokens(&aux, lexer);
+	token_expansion(&aux, lexer);
 	return (0);
 }
 
-int main(int argc, char *argv[])
+void	init_ev(char *envp[])
 {
-	t_lexer	*lexer;
-	t_token *temp;
-	char *test = argv[1];
+	t_global	*global;
+	t_list		*temp;
+	int			i;
 
-	if (argc != 2)
+	global = global_struct();
+	global->ev = malloc(sizeof(t_list*));
+	*global->ev = NULL;
+	i = 0;
+	while (envp[i])
+	{
+		temp = malloc(sizeof(t_list));
+		temp->content = ft_strdup(envp[i]);
+		temp->next = NULL;
+		ft_lstadd_back(global->ev, temp);
+		i++;
+	}
+}
+
+void	init_global_struct(char *envp[])
+{
+	t_global *global;
+
+	global = global_struct();
+	global->exit_code = 0;
+	init_ev(envp);
+}
+
+void	free_global_struct(void)
+{
+	t_global	*global;
+	t_list		*temp;
+
+	global = global_struct();
+	while ((*global->ev))
+	{
+		temp = (*global->ev)->next;
+		free((*global->ev)->content);
+		free((*global->ev));
+		(*global->ev) = temp;
+	}
+	free(global->ev);
+}
+
+int main(int argc, char *argv[], char *envp[])
+{
+	t_lexer		*lexer;
+	t_token		*temp;
+	char *test1 = argv[1];
+	char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
+
+	if (argc == -1)
 		printf("Don't forget to only provide one string\n");
+	if (test1 == NULL)
+	{
+		;
+	}
+	init_global_struct(envp);
+	
 	printf("This is the string being tested: '%s'\n", test);
 	lexer = malloc(sizeof(t_lexer));
 	lexer->first_token = NULL;
@@ -305,6 +523,7 @@ int main(int argc, char *argv[])
 	if (!lexer)
 		return (EXIT_FAILURE);
 	lexer_function(test, lexer);
+	// parser_function(lexer);
 	while (lexer->first_token)
 	{
 		printf("This is the content: '%s' and this is the type: '%i'\n", lexer->first_token->content, lexer->first_token->type);
@@ -315,5 +534,6 @@ int main(int argc, char *argv[])
 	}
 	printf("Number of tokens: %i\n", lexer->count_token);
 	free(lexer);
+	free_global_struct();
 	return (0);
 }

@@ -131,10 +131,6 @@ int	infix_binding_power(int type, int side)
 		return (5);
 	else if (type == CHAR_PIPE && side == RIGHT)
 		return (6);
-	else if (is_redirect_token(type) && side == LEFT)
-		return (0);
-	else if (is_redirect_token(type) && side == RIGHT)
-		return (8);
 	else
 		return (-1);
 }
@@ -147,6 +143,81 @@ int	prefix_binding_power(int type, int side)
 		return (8);
 	else
 		return (-1);
+}
+
+void	ast_node_addback(t_ast *l_node, t_token *token)
+{
+	t_ast	*first_l_node;
+
+	if (l_node->left == NULL)
+	{
+		l_node->left = create_ast_node(token->type, token->content);
+		return ;
+	}
+	first_l_node = l_node->left;
+	while (l_node->left != NULL)
+		l_node = l_node->left;
+	l_node->left = create_ast_node(token->type, token->content);
+	l_node = first_l_node;
+}
+
+void	print_node_leafs(t_ast *node)
+{
+	t_ast	*l_node;
+	t_ast	*r_node;
+
+	print_ast_node(node);
+	l_node = node->left;
+	r_node = node->right;
+	while (l_node != NULL)
+	{
+		printf("This is a left node: %s\n", l_node->content);
+		l_node = l_node->left;
+	}
+	while (r_node != NULL)
+	{
+		printf("This is a left node: %s\n", r_node->content);
+		r_node = r_node->left;
+	}
+}
+
+void print_ast_sexpr(t_ast *root)
+{
+	if (!root)
+	{
+		printf("()\n");
+		return;
+	}
+	
+	ast_to_sexpr(root);
+	printf("\n");
+}
+
+void ast_to_sexpr(t_ast *node)
+{
+	if (!node)
+		return;
+
+	if (!node->left && !node->right)
+	{
+		if (node->content)
+			printf("%s", node->content);
+		return;
+	}
+	printf("(");
+	if (node->content)
+		printf("%s", node->content);
+	if (node->left)
+	{
+		printf(" ");
+		ast_to_sexpr(node->left);
+	}
+	if (node->right)
+	{
+		printf(" ");
+		ast_to_sexpr(node->right);
+	}
+	printf(")");
 }
 
 t_ast	*parser_function(t_parser *par, int min_bp)
@@ -168,6 +239,12 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 	{
 		if (par->curr_token == NULL)
 			break ;
+		else if (is_default_token(par->curr_token->type) && is_default_token(l_node->type))
+		{
+			ast_node_addback(l_node, par->curr_token);
+			par->curr_token = par->curr_token->next;
+			continue;
+		}
 		// printf("Type: %i; Content:%s \n", par->curr_token->type, par->curr_token->content);
 		l_bp = infix_binding_power(par->curr_token->type, LEFT);
 		r_bp = infix_binding_power(par->curr_token->type, RIGHT);
@@ -182,7 +259,7 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 			// printf("This is the address of curr_token: %p; this is the content: %s\n", op, op->content);
 			par->curr_token = par->curr_token->next;
 			r_node = parser_function(par, r_bp);
-			print_ast_node(l_node);
+			print_node_leafs(l_node);
 			print_ast_node(r_node);
 			printf("This is the address of curr_token: %p; this is the content: %s\n", op, op->content);
 			l_node = create_ast_structure(op, l_node, r_node);

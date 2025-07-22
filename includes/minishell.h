@@ -117,4 +117,8 @@ int	infix_binding_power(int type, int side);
 int	prefix_binding_power(int type, int side);
 t_ast	*parser_function(t_parser *par, int min_bp);
 
+void print_ast_sexpr(t_ast *root);
+void ast_to_sexpr(t_ast *node);
+
+
 #endif

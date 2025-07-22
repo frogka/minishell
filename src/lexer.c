@@ -506,7 +506,9 @@ int main(int argc, char *argv[], char *envp[])
 	t_token		*temp;
 	char *test1 = argv[1];
 	// char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
-	char *test = "cat | grep";
+	// char *test = "cat | grep";
+	// char *test = "cat | grep | ls";
+	char *test = "ls -l cat cat | grep this | ls";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");
@@ -527,6 +529,7 @@ int main(int argc, char *argv[], char *envp[])
 	par = init_paser(lexer);
 	root_tree = parser_function(par, 0);
 	print_ast_node(root_tree);
+	print_ast_sexpr(root_tree);
 	while (lexer->first_token)
 	{
 		printf("This is the content: '%s' and this is the type: '%i'\n", lexer->first_token->content, lexer->first_token->type);

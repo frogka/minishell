@@ -238,7 +238,6 @@ void	process_char_quote(char *input, t_token_aux *aux, t_lexer *lexer)
 	}
 }
 
-/* add a new status code to get variables */
 void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer)
 {
 	int f;
@@ -301,8 +300,6 @@ void	process_char(char *input, t_token_aux *aux, t_lexer *lexer)
 			process_char_def(input, aux, lexer);
 		else
 			process_char_quote(input, aux, lexer);
-		printf("[%i]: %s\t", aux->i, aux->curr_token->content);
-		printf("%i\n", aux->status);
 		aux->i++;
 	}
 }
@@ -503,10 +500,13 @@ void	free_global_struct(void)
 
 int main(int argc, char *argv[], char *envp[])
 {
+	t_parser	*par;
+	t_ast		*root_tree;
 	t_lexer		*lexer;
 	t_token		*temp;
 	char *test1 = argv[1];
-	char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
+	// char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
+	char *test = "cat | grep";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");
@@ -523,7 +523,10 @@ int main(int argc, char *argv[], char *envp[])
 	if (!lexer)
 		return (EXIT_FAILURE);
 	lexer_function(test, lexer);
-	// parser_function(lexer);
+
+	par = init_paser(lexer);
+	root_tree = parser_function(par, 0);
+	print_ast_node(root_tree);
 	while (lexer->first_token)
 	{
 		printf("This is the content: '%s' and this is the type: '%i'\n", lexer->first_token->content, lexer->first_token->type);
@@ -532,7 +535,7 @@ int main(int argc, char *argv[], char *envp[])
 		free(temp->content);
 		free(temp);
 	}
-	printf("Number of tokens: %i\n", lexer->count_token);
+	// printf("Number of tokens: %i\n", lexer->count_token);
 	free(lexer);
 	free_global_struct();
 	return (0);

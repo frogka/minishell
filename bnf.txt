@@ -1,0 +1,23 @@
+<commandline> ::= <list>
+				| <list> ";"
+
+<list> ::= <conditional>
+		| <list> ";" <conditional>
+		| <list> "&" <conditional>
+
+<conditional> ::= <pipeline>
+				| <conditional> "&&" <pipeline>
+				| <conditional> "||" <pipeline>
+
+<pipeline> ::= <command>
+			| <pipeline> "|" <command>
+
+<command> ::= [word]
+			| <redirection>
+			| <command> [word]
+			| <command> <redirection>
+
+<redirection> ::= <input_redirect> | <ouput_redirect> | <heredoc>
+<input_redirect> ::= "<" [filename]
+<ouput_redirect> ::= ">" [filename] | ">>" [filename]
+<heredoc> ::= "<<" [delimeter]

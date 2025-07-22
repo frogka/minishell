@@ -2,11 +2,13 @@
 
 void	print_ast_node(t_ast *node)
 {
+	printf("===============\n");
 	printf("Node address: %p\n", node);
 	printf("Node type: %i\n", node->type);
 	printf("Node content: %s\n", node->content);
 	printf("left node: %p\n", node->left);
 	printf("right node: %p\n", node->right);
+	printf("===============\n\n");
 }
 
 void	ast_token_next(t_parser *par)
@@ -34,7 +36,7 @@ t_ast	*create_ast_structure(t_token *token, t_ast *l_node, t_ast *r_node)
 	
 	node = create_ast_node(token->type, token->content);
 	node->left = l_node;
-	node->left = r_node;
+	node->right = r_node;
 	return (node);
 }
 
@@ -95,10 +97,11 @@ t_ast	*consume_first_node(t_parser *par, int *r_bp, t_ast *r_node)
 {
 	t_ast	*output_node;
 
+	// printf("\nThis is inside the consume first node function: %s\n", par->curr_token->content);
 	if (is_default_token(par->curr_token->type))
 	{
 		output_node = create_ast_node(CHAR_DEF, par->curr_token->content);
-		*(par->root) = output_node;
+		// *(par->root) = output_node;
 		par->curr_token = par->curr_token->next;
 		return (output_node);
 	}
@@ -152,6 +155,7 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 	t_ast		*r_node;
 	int			l_bp;
 	int			r_bp;
+	t_token		*op;
 
 	if (par == NULL || par->initial_token == NULL)
 		return (NULL);
@@ -162,22 +166,26 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 		printf("We have an error\n");
 	while (1)
 	{
-		if (par->curr_token->next == NULL)
+		if (par->curr_token == NULL)
 			break ;
-		printf("Type: %i; Content:%s \n", par->curr_token->next->type, par->curr_token->next->content);
-		l_bp = infix_binding_power(par->curr_token->next->type, LEFT);
-		r_bp = infix_binding_power(par->curr_token->next->type, RIGHT);
-		printf("l_bp: %i and r_bp: %i\n", l_bp, r_bp);
+		// printf("Type: %i; Content:%s \n", par->curr_token->type, par->curr_token->content);
+		l_bp = infix_binding_power(par->curr_token->type, LEFT);
+		r_bp = infix_binding_power(par->curr_token->type, RIGHT);
 		if(l_bp != -1 && r_bp != -1)
 		{
-			printf("in Here\n");
+			// printf("in Here. This is l_bp: %i and r_bp: %i\n", l_bp, r_bp);
 			if (l_bp < min_bp)
 			{
 				break;
 			}
+			op = par->curr_token;
+			// printf("This is the address of curr_token: %p; this is the content: %s\n", op, op->content);
 			par->curr_token = par->curr_token->next;
 			r_node = parser_function(par, r_bp);
-			l_node = create_ast_structure(par->curr_token, l_node, r_node);
+			print_ast_node(l_node);
+			print_ast_node(r_node);
+			printf("This is the address of curr_token: %p; this is the content: %s\n", op, op->content);
+			l_node = create_ast_structure(op, l_node, r_node);
 			continue;
 		}
 		break;

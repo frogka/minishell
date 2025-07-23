@@ -2,6 +2,8 @@
 
 void	print_ast_node(t_ast *node)
 {
+	if (node == NULL)
+		return;	
 	printf("===============\n");
 	printf("Node address: %p\n", node);
 	printf("Node type: %i\n", node->type);
@@ -93,30 +95,6 @@ int	is_operator_token(int type)
 		return (0);
 }
 
-t_ast	*consume_first_node(t_parser *par, int *r_bp, t_ast *r_node)
-{
-	t_ast	*output_node;
-
-	// printf("\nThis is inside the consume first node function: %s\n", par->curr_token->content);
-	if (is_default_token(par->curr_token->type))
-	{
-		output_node = create_ast_node(CHAR_DEF, par->curr_token->content);
-		// *(par->root) = output_node;
-		par->curr_token = par->curr_token->next;
-		return (output_node);
-	}
-	else if (is_redirect_token(par->curr_token->type))
-	{
-		*r_bp = prefix_binding_power(par->curr_token->type, RIGHT);
-		r_node = parser_function(par, *r_bp);
-		output_node = create_ast_structure(par->curr_token, NULL, r_node);
-		par->curr_token = par->curr_token->next;
-		return (output_node);
-	}
-	else
-		return (NULL);
-}
-
 int	infix_binding_power(int type, int side)
 {
 	if ((type == ';' || type == '&') && side == LEFT)
@@ -138,7 +116,7 @@ int	infix_binding_power(int type, int side)
 int	prefix_binding_power(int type, int side)
 {
 	if (is_redirect_token(type) && side == LEFT)
-		return (0);
+		return (1);
 	else if (is_redirect_token(type) && side == RIGHT)
 		return (8);
 	else
@@ -159,6 +137,43 @@ void	ast_node_addback(t_ast *l_node, t_token *token)
 		l_node = l_node->left;
 	l_node->left = create_ast_node(token->type, token->content);
 	l_node = first_l_node;
+}
+
+void	ast_node_placeback(t_ast **node_root, t_ast *node_toadd, int side)
+{
+	t_ast	*first_node;
+
+	if (*node_root == NULL)
+	{
+		*node_root = node_toadd;
+		return ;
+	}
+	if (side == LEFT)
+	{
+		if ((*node_root)->left == NULL)
+		{
+			(*node_root)->left = node_toadd;
+			return ;
+		}
+		first_node = (*node_root)->left;
+		while ((*node_root)->left->left)
+			(*node_root)->left = (*node_root)->left->left;
+		(*node_root)->left->left = node_toadd;
+		(*node_root)->left = first_node; 
+	}
+	else
+	{
+		if ((*node_root)->right == NULL)
+		{
+			(*node_root)->right = node_toadd;
+			return ;
+		}
+		first_node = (*node_root)->right;
+		while ((*node_root)->right->right)
+			(*node_root)->right = (*node_root)->right->right;
+		(*node_root)->right->right = node_toadd;
+		(*node_root)->right = first_node; 
+	}
 }
 
 void	print_node_leafs(t_ast *node)
@@ -220,6 +235,60 @@ void ast_to_sexpr(t_ast *node)
 	printf(")");
 }
 
+t_ast	*parse_simple_command(t_parser *par)
+{
+	t_ast	*file;
+	t_ast	*cmd;
+	t_ast	*redi;
+	t_ast	*redi_root;
+	t_token	*token_redirect;
+
+	file = NULL;
+	cmd = NULL;
+	redi = NULL;
+	redi_root = NULL;
+
+	while (par->curr_token && !is_operator_token(par->curr_token->type))
+	{
+		if (is_redirect_token(par->curr_token->type))
+		{
+			token_redirect = par->curr_token;
+			par->curr_token = par->curr_token->next;
+
+			if (!is_default_token(par->curr_token->type))
+			{
+				printf("Error: syntax error near unexpecter token `newline'");
+				return (NULL);
+			}
+			
+			file = create_ast_node(CHAR_DEF, par->curr_token->content);
+			redi = create_ast_structure(token_redirect, NULL, file);
+			ast_node_placeback(&redi_root, redi, RIGHT);
+
+			par->curr_token = par->curr_token->next;
+		}
+		else if(is_default_token(par->curr_token->type))
+		{
+			if (cmd == NULL)
+				cmd = create_ast_node(CHAR_DEF, par->curr_token->content);
+			else
+				ast_node_addback(cmd, par->curr_token);
+			par->curr_token = par->curr_token->next;
+		}
+		else
+			break;
+	}
+	
+	if (cmd == NULL && redi_root != NULL)
+	{
+		cmd = create_ast_node(CHAR_DEF, NULL);
+		cmd->right = redi_root;
+	}
+	else if (cmd != NULL && redi_root != NULL)
+		cmd->right = redi_root;
+	return (cmd);	
+}
+
 t_ast	*parser_function(t_parser *par, int min_bp)
 {
 	t_ast		*l_node;
@@ -232,36 +301,31 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 		return (NULL);
 	l_node = NULL;
 	r_node = NULL;
-	l_node = consume_first_node(par, &r_bp, r_node);
+	l_node = parse_simple_command(par);
 	if (l_node == NULL)
-		printf("We have an error\n");
+	{
+		printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->content);
+		return (NULL);
+	}
 	while (1)
 	{
 		if (par->curr_token == NULL)
 			break ;
-		else if (is_default_token(par->curr_token->type) && is_default_token(l_node->type))
+		else if (is_default_token(par->curr_token->type) && is_redirect_token(l_node->type))
 		{
-			ast_node_addback(l_node, par->curr_token);
+			ast_node_addback(r_node, par->curr_token);
 			par->curr_token = par->curr_token->next;
-			continue;
+			break;
 		}
-		// printf("Type: %i; Content:%s \n", par->curr_token->type, par->curr_token->content);
 		l_bp = infix_binding_power(par->curr_token->type, LEFT);
 		r_bp = infix_binding_power(par->curr_token->type, RIGHT);
 		if(l_bp != -1 && r_bp != -1)
 		{
-			// printf("in Here. This is l_bp: %i and r_bp: %i\n", l_bp, r_bp);
 			if (l_bp < min_bp)
-			{
 				break;
-			}
 			op = par->curr_token;
-			// printf("This is the address of curr_token: %p; this is the content: %s\n", op, op->content);
 			par->curr_token = par->curr_token->next;
 			r_node = parser_function(par, r_bp);
-			print_node_leafs(l_node);
-			print_ast_node(r_node);
-			printf("This is the address of curr_token: %p; this is the content: %s\n", op, op->content);
 			l_node = create_ast_structure(op, l_node, r_node);
 			continue;
 		}

@@ -112,10 +112,11 @@ t_parser	*init_paser(t_lexer *lex);
 int	is_default_token(int type);
 int	is_redirect_token(int type);
 int	is_operator_token(int type);
-t_ast	*consume_first_node(t_parser *par, int *r_bp, t_ast *r_node);
 int	infix_binding_power(int type, int side);
 int	prefix_binding_power(int type, int side);
 t_ast	*parser_function(t_parser *par, int min_bp);
+t_ast	*parse_simple_command(t_parser *par);
+
 
 void print_ast_sexpr(t_ast *root);
 void ast_to_sexpr(t_ast *node);

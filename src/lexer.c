@@ -508,7 +508,10 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
 	// char *test = "cat | grep";
 	// char *test = "cat | grep | ls";
-	char *test = "ls -l cat cat | grep this | ls";
+	// char *test = "ls -l cat cat | grep this | ls";
+	// char *test = "<input.txt ls -l cat cat | grep this | ls";
+	// char *test = "<input.txt ls -l cat cat >ouput1 | grep this >ouput2 | ls >output3";
+	char *test = "|";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");

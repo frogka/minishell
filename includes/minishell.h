@@ -146,6 +146,7 @@ int	open_fd(char *path, int option);
 int	count_number_commands(t_ast *root_tree);
 int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);
+void	create_pipeline(t_px *px);
 int executor_function(t_ast *root_tree); 
 
 #endif

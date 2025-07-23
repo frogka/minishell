@@ -6,8 +6,8 @@ int main(int argc, char *argv[], char *envp[])
 	t_ast		*root_tree;
 	t_lexer		*lexer;
 	char *test1 = argv[1];
-	// char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
-	char *test = "cat | grep";
+	char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
+	// char *test = "cat | grep";
 	// char *test = "cat | grep | ls";
 	// char *test = "ls -l cat cat | grep this | ls";
 	// char *test = "<input.txt ls -l cat cat | grep this | ls";

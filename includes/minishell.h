@@ -7,6 +7,8 @@
 #define DEF 0
 #define LEFT 0
 #define RIGHT 1
+#define READ 0
+#define WRITE 1
 
 typedef	struct s_ast
 {
@@ -147,6 +149,10 @@ int	count_number_commands(t_ast *root_tree);
 int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);
 void	create_pipeline(t_px *px);
-int executor_function(t_ast *root_tree); 
+int	executor_aux(t_px *px, t_ast *root_tree);
+void	child_pipe_setup(t_px *px, int i);
+int	executor(t_px *px, int i, t_ast *cmd_node);
+int executor_function(t_ast *root_tree);
+
 
 #endif

@@ -109,6 +109,7 @@ void	print_ast_node(t_ast *node);
 void	ast_token_next(t_parser *par);
 t_ast	*create_ast_node(int type, char *content);
 t_parser	*init_paser(t_lexer *lex);
+void	free_parser_struct(t_parser *par);
 int	is_default_token(int type);
 int	is_redirect_token(int type);
 int	is_operator_token(int type);
@@ -120,6 +121,7 @@ t_ast	*parse_simple_command(t_parser *par);
 
 void print_ast_sexpr(t_ast *root);
 void ast_to_sexpr(t_ast *node);
+void	free_ast(t_ast *root);
 
 
 #endif

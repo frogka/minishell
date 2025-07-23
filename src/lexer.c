@@ -510,8 +510,8 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "cat | grep | ls";
 	// char *test = "ls -l cat cat | grep this | ls";
 	// char *test = "<input.txt ls -l cat cat | grep this | ls";
-	// char *test = "<input.txt ls -l cat cat >ouput1 | grep this >ouput2 | ls >output3";
-	char *test = "|";
+	char *test = "<input.txt ls -l cat cat >ouput1 | grep this >ouput2 | ls >output3";
+	// char *test = "|";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");
@@ -544,5 +544,7 @@ int main(int argc, char *argv[], char *envp[])
 	// printf("Number of tokens: %i\n", lexer->count_token);
 	free(lexer);
 	free_global_struct();
+	free_ast(root_tree);
+	free_parser_struct(par);
 	return (0);
 }

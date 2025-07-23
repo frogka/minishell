@@ -55,6 +55,16 @@ t_parser	*init_paser(t_lexer *lex)
 	return(par);
 }
 
+void	free_parser_struct(t_parser *par)
+{
+	if (par)
+	{
+		free(par->root);
+		free(par);
+	}
+	
+}
+
 int	is_default_token(int type)
 {
 	if (type == CHAR_DEF
@@ -332,4 +342,15 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 		break;
 	}
 	return (l_node);
+}
+
+void	free_ast(t_ast *root)
+{
+	if (root)
+	{
+		free_ast(root->left);
+		free_ast(root->right);
+		free(root->content);
+		free(root);
+	}
 }

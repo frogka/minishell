@@ -28,6 +28,14 @@ typedef struct s_bp
 	int	r;
 }	t_bp;
 
+typedef struct s_px
+{
+	pid_t	*pids;
+	int		**pipes;
+	int		num_pipes;
+	int		num_commands;
+	t_ast	*root_tree;
+}	t_px;
 
 enum e_token_type
 {
@@ -133,5 +141,11 @@ void	free_global_struct(void);
 t_lexer	*init_lexer(void);
 void	free_lexer(t_lexer *lexer);
 
+/* executor.c */
+int	open_fd(char *path, int option);
+int	count_number_commands(t_ast *root_tree);
+int	count_number_pipes(t_ast *root_tree);
+t_px	*initialize_px(t_ast *root_tree);
+int executor_function(t_ast *root_tree); 
 
 #endif

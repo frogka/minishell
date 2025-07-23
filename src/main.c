@@ -7,11 +7,11 @@ int main(int argc, char *argv[], char *envp[])
 	t_lexer		*lexer;
 	char *test1 = argv[1];
 	// char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
-	// char *test = "cat | grep";
+	char *test = "cat | grep";
 	// char *test = "cat | grep | ls";
 	// char *test = "ls -l cat cat | grep this | ls";
 	// char *test = "<input.txt ls -l cat cat | grep this | ls";
-	char *test = "<input.txt ls -l cat cat >ouput1 | grep this >ouput2 | ls >output3";
+	// char *test = "<input.txt ls -l cat cat >ouput1 | grep this >ouput2 | ls >output3";
 	// char *test = "|";
 
 	if (argc == -1)
@@ -20,11 +20,11 @@ int main(int argc, char *argv[], char *envp[])
 	{
 		;
 	}
-	printf("This is the string being tested: '%s'\n", test);
+	printf("This is the string being tested: '%s'\n", test); 
 	
 	/* inits */
 	init_global_struct(envp);
-	lexer = init_lexer();	
+	lexer = init_lexer();
 	if (!lexer)
 		return (EXIT_FAILURE);
 
@@ -34,6 +34,8 @@ int main(int argc, char *argv[], char *envp[])
 	root_tree = parser_function(par, 0);
 	print_ast_node(root_tree);
 	print_ast_sexpr(root_tree);
+
+	executor_function(root_tree);
 
 	free_lexer(lexer);
 	free_global_struct();

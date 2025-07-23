@@ -302,7 +302,7 @@ t_ast	*parse_simple_command(t_parser *par)
 	return (cmd);	
 }
 
-void	parser_function_loop(t_parser *par, int min_bp, t_ast *l_node, t_ast *r_node)
+void	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_node)
 {
 	t_bp		bp;
 	t_token		*op;
@@ -311,9 +311,9 @@ void	parser_function_loop(t_parser *par, int min_bp, t_ast *l_node, t_ast *r_nod
 	{
 		if (par->curr_token == NULL)
 			break ;
-		else if (is_default_token(par->curr_token->type) && is_redirect_token(l_node->type))
+		else if (is_default_token(par->curr_token->type) && is_redirect_token((*l_node)->type))
 		{
-			ast_node_addback(r_node, par->curr_token);
+			ast_node_addback(*r_node, par->curr_token);
 			par->curr_token = par->curr_token->next;
 			break;
 		}
@@ -324,8 +324,8 @@ void	parser_function_loop(t_parser *par, int min_bp, t_ast *l_node, t_ast *r_nod
 				break;
 			op = par->curr_token;
 			par->curr_token = par->curr_token->next;
-			r_node = parser_function(par, bp.r);
-			l_node = create_ast_structure(op, l_node, r_node);
+			*r_node = parser_function(par, bp.r);
+			*l_node = create_ast_structure(op, *l_node, *r_node);
 			continue;
 		}
 		break;
@@ -347,7 +347,7 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 		// printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->content);
 		return (NULL);
 	}
-	parser_function_loop(par, min_bp, l_node, r_node);
+	parser_function_loop(par, min_bp, &l_node, &r_node);
 	return (l_node);
 }
 

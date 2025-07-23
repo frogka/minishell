@@ -105,22 +105,28 @@ int	is_operator_token(int type)
 		return (0);
 }
 
-int	infix_binding_power(int type, int side)
+void	infix_binding_power(int type, t_bp *bp)
 {
-	if ((type == ';' || type == '&') && side == LEFT)
-		return (1);
-	else if ((type == ';' || type == '&')  && side == RIGHT)
-		return (2);
-	else if ((type == CHAR_AND || type == CHAR_OR) && side == LEFT)
-		return (3);
-	else if ((type == CHAR_AND || type == CHAR_OR) && side == RIGHT)
-		return (4);
-	else if (type == CHAR_PIPE && side == LEFT)
-		return (5);
-	else if (type == CHAR_PIPE && side == RIGHT)
-		return (6);
+	if (type == ';' || type == '&')
+	{
+		bp->l = 1;
+		bp->r = 2;
+	}
+	else if (type == CHAR_AND || type == CHAR_OR)
+	{
+		bp->l = 3;
+		bp->r = 4;
+	}
+	else if (type == CHAR_PIPE)
+	{
+		bp->l = 5;
+		bp->r = 6;
+	}
 	else
-		return (-1);
+	{
+		bp->l = -1;
+		bp->r = -1;
+	}
 }
 
 int	prefix_binding_power(int type, int side)
@@ -264,17 +270,14 @@ t_ast	*parse_simple_command(t_parser *par)
 		{
 			token_redirect = par->curr_token;
 			par->curr_token = par->curr_token->next;
-
 			if (!is_default_token(par->curr_token->type))
 			{
 				printf("Error: syntax error near unexpecter token `newline'");
 				return (NULL);
 			}
-			
 			file = create_ast_node(CHAR_DEF, par->curr_token->content);
 			redi = create_ast_structure(token_redirect, NULL, file);
 			ast_node_placeback(&redi_root, redi, RIGHT);
-
 			par->curr_token = par->curr_token->next;
 		}
 		else if(is_default_token(par->curr_token->type))
@@ -299,24 +302,11 @@ t_ast	*parse_simple_command(t_parser *par)
 	return (cmd);	
 }
 
-t_ast	*parser_function(t_parser *par, int min_bp)
+void	parser_function_loop(t_parser *par, int min_bp, t_ast *l_node, t_ast *r_node)
 {
-	t_ast		*l_node;
-	t_ast		*r_node;
-	int			l_bp;
-	int			r_bp;
+	t_bp		bp;
 	t_token		*op;
 
-	if (par == NULL || par->initial_token == NULL)
-		return (NULL);
-	l_node = NULL;
-	r_node = NULL;
-	l_node = parse_simple_command(par);
-	if (l_node == NULL)
-	{
-		printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->content);
-		return (NULL);
-	}
 	while (1)
 	{
 		if (par->curr_token == NULL)
@@ -327,20 +317,37 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 			par->curr_token = par->curr_token->next;
 			break;
 		}
-		l_bp = infix_binding_power(par->curr_token->type, LEFT);
-		r_bp = infix_binding_power(par->curr_token->type, RIGHT);
-		if(l_bp != -1 && r_bp != -1)
+		infix_binding_power(par->curr_token->type, &bp);
+		if(bp.l != -1 && bp.r != -1)
 		{
-			if (l_bp < min_bp)
+			if (bp.l < min_bp)
 				break;
 			op = par->curr_token;
 			par->curr_token = par->curr_token->next;
-			r_node = parser_function(par, r_bp);
+			r_node = parser_function(par, bp.r);
 			l_node = create_ast_structure(op, l_node, r_node);
 			continue;
 		}
 		break;
 	}
+}
+
+t_ast	*parser_function(t_parser *par, int min_bp)
+{
+	t_ast		*l_node;
+	t_ast		*r_node;
+
+	if (par == NULL || par->initial_token == NULL)
+		return (NULL);
+	l_node = NULL;
+	r_node = NULL;
+	l_node = parse_simple_command(par);
+	if (l_node == NULL)
+	{
+		// printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->content);
+		return (NULL);
+	}
+	parser_function_loop(par, min_bp, l_node, r_node);
 	return (l_node);
 }
 

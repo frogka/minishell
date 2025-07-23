@@ -14,7 +14,9 @@ LIBFT_DIR = ./libft/
 
 # Source Files
 SRC_FILES = lexer.c \
-			parser.c
+			parser.c \
+			main.c \
+			aux.c
 
 # Object Files
 OBJS_FILES = $(SRC_FILES:.c=.o)

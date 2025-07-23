@@ -22,6 +22,12 @@ typedef struct s_global
 	t_list	**ev;
 }	t_global;
 
+typedef struct s_bp
+{
+	int	l;
+	int	r;
+}	t_bp;
+
 
 enum e_token_type
 {
@@ -100,9 +106,6 @@ void	insert_expansion(t_token *token, int sta, int len, char *mid_str);
 void	token_expansion_aux(t_token *token);
 void	token_expansion(t_token_aux *aux, t_lexer *lexer);
 int	lexer_function(char *input, t_lexer *lexer);
-void	init_ev(char *envp[]);
-void	init_global_struct(char *envp[]);
-void	free_global_struct(void);
 
 /* parser.c */
 void	print_ast_node(t_ast *node);
@@ -113,7 +116,7 @@ void	free_parser_struct(t_parser *par);
 int	is_default_token(int type);
 int	is_redirect_token(int type);
 int	is_operator_token(int type);
-int	infix_binding_power(int type, int side);
+void	infix_binding_power(int type, t_bp *bp);
 int	prefix_binding_power(int type, int side);
 t_ast	*parser_function(t_parser *par, int min_bp);
 t_ast	*parse_simple_command(t_parser *par);
@@ -122,6 +125,13 @@ t_ast	*parse_simple_command(t_parser *par);
 void print_ast_sexpr(t_ast *root);
 void ast_to_sexpr(t_ast *node);
 void	free_ast(t_ast *root);
+
+/* aux.c */
+void	init_ev(char *envp[]);
+void	init_global_struct(char *envp[]);
+void	free_global_struct(void);
+t_lexer	*init_lexer(void);
+void	free_lexer(t_lexer *lexer);
 
 
 #endif

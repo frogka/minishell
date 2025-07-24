@@ -182,6 +182,7 @@ void	redirections_files_setup(int fd, int type, int num_output_fd)
 		return ;
 	if (type == CHAR_INRED || type == CHAR_HEREDOC)
 	{
+		printf("In the redirections_files_setup function \n");
 		if (dup2(fd, STDIN_FILENO) == -1)
 			printf("To Add error Handler function\n");
 			// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
@@ -207,9 +208,12 @@ void	redirections_setup(t_ast *root)
 	num_output_fd = 0;
 	while (root)
 	{
+		printf("This is the node: %s\n", root->content);
 		if (is_redirect_token(root->type))
 		{
+			printf("Before open_fd\n");
 			fd = open_fd(root->right->content, root->type);
+			printf("After open_fd: %i\n", fd);
 			redirections_files_setup(fd, root->type, num_output_fd);
 		}
 		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)
@@ -255,7 +259,9 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 				close(px->pipes[j][1]);
 			}
 		}
+		printf("Before redirections_setup\n");
 		redirections_setup(cmd_node);
+		printf("After redirections_setup\n");
 		// if (px->argv[i + 2 + px->here_doc][0] == 0)
 		// 	error_handler("No command ''", NULL, 1, px);
 		if (is_default_token(cmd_node->type))

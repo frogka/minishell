@@ -26,6 +26,7 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "echo$USE";
 	// char *test = "echo $PATH";
 	char *test = "<<DATA cat | grep This";
+	// char *test = "<<DATA cat";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");

@@ -65,7 +65,8 @@ t_px	*initialize_px(t_ast *root_tree)
 	px->num_pipes = count_number_pipes(root_tree);
 	px->root_tree = root_tree;
 	px->curr_index = 0;
-	px->pids = malloc(sizeof(pid_t) * px->num_commands);
+	if (px->num_commands != 0)
+		px->pids = malloc(sizeof(pid_t) * px->num_commands);
 	// malloc_error_handler(px->pids, EXIT_FAILURE);
 	create_pipeline(px);
 	return (px);
@@ -395,8 +396,13 @@ int executor_function(t_ast *root_tree)
 		printf("%i\n", px->pids[num]);
 		waitpid(px->pids[num], &status, 0);
 	}
+	if (px->num_commands == 0)
+	{
+		redirections_setup(px->root_tree);
+	}
+	num = px->num_commands;	
 	free_px(px);
-	if (WIFEXITED(status))
+	if (num != 0 && WIFEXITED(status))
 		return (WEXITSTATUS(status));
 	return (EXIT_SUCCESS);
 }

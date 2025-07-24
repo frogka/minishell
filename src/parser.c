@@ -291,12 +291,8 @@ t_ast	*parse_simple_command(t_parser *par)
 		else
 			break;
 	}
-	
 	if (cmd == NULL && redi_root != NULL)
-	{
-		cmd = create_ast_node(CHAR_DEF, NULL);
-		cmd->right = redi_root;
-	}
+		cmd = redi_root;
 	else if (cmd != NULL && redi_root != NULL)
 		cmd->right = redi_root;
 	return (cmd);	

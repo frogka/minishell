@@ -113,29 +113,6 @@ void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	}
 }
 
-void	handle_def_dollar(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
-{
-	if (*f == 0 && (input[aux->i] == CHAR_DOLLAR))
-	{
-		if (aux->j != 0)
-		{
-			aux->curr_token->content[aux->j] = 0;
-			aux->j = 0;
-			aux->curr_token = add_token_back(lexer, aux->len_input);
-		}
-		aux->curr_token->content[aux->j] = input[aux->i];
-		aux->curr_token->type = input[aux->i];
-		aux->curr_token = add_token_back(lexer, aux->len_input);
-		(*f)++;
-	}
-	else if (*f == 0 && aux->curr_token->type == CHAR_DOLLAR)
-	{
-		aux->curr_token->content[aux->j] = input[aux->i];
-		aux->j++;
-		(*f)++;
-	}
-}
-
 void	handle_quote_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 {
 	if (*f == 0 && (input[aux->i] == CHAR_QM || input[aux->i] == CHAR_DOLLAR))
@@ -226,7 +203,6 @@ void	process_char_def(char *input, t_token_aux *aux, t_lexer *lexer)
 	int	flag;
 
 	flag = 0;
-	printf("[%i] Current Token: %s\n", aux->curr_token->type, aux->curr_token->content);
 	handle_def_2char(input, aux, lexer, &flag);
 	handle_def_1char(input, aux, lexer, &flag);
 	handle_terminal(input, aux, lexer, &flag);
@@ -473,12 +449,5 @@ int	lexer_function(char *input, t_lexer *lexer)
 	process_char(input, &aux, lexer);
 	clean_last_tokens(&aux, lexer);
 	token_expansion(&aux, lexer);
-	while (lexer->first_token)
-	{
-		printf("This is the type: %i; and this is the content: %s\n", lexer->first_token->type, lexer->first_token->content);
-		lexer->first_token = lexer->first_token->next;
-	}
-	exit(EXIT_SUCCESS);
-	
 	return (0);
 }

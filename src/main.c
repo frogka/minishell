@@ -23,7 +23,7 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "echo $USER";
 	// char *test = "echo$USER";
 	// char *test = "echo$USE";
-	char *test = "echo$PATH";
+	char *test = "echo $PATH";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");
@@ -48,7 +48,6 @@ int main(int argc, char *argv[], char *envp[])
 	print_ast_sexpr(root_tree);
 
 	global->exit_code = executor_function(root_tree);
-	printf("=================== After the executor function\n");
 	free_lexer(lexer);
 	free_global_struct();
 	free_ast(root_tree);

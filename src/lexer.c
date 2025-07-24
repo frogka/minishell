@@ -98,8 +98,7 @@ t_token	*add_token_back(t_lexer *lexer, int len_input)
 void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 {
 	if (*f == 0 && (input[aux->i] == CHAR_PIPE || input[aux->i] == CHAR_OUTRED
-			|| input[aux->i] == CHAR_INRED || input[aux->i] == CHAR_AMPERSAND
-			|| input[aux->i] == CHAR_QM || input[aux->i] == CHAR_DOLLAR))
+			|| input[aux->i] == CHAR_INRED || input[aux->i] == CHAR_AMPERSAND))
 	{
 		if (aux->j != 0)
 		{
@@ -110,6 +109,29 @@ void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 		aux->curr_token->content[aux->j] = input[aux->i];
 		aux->curr_token->type = input[aux->i];
 		aux->curr_token = add_token_back(lexer, aux->len_input);
+		(*f)++;
+	}
+}
+
+void	handle_def_dollar(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
+{
+	if (*f == 0 && (input[aux->i] == CHAR_DOLLAR))
+	{
+		if (aux->j != 0)
+		{
+			aux->curr_token->content[aux->j] = 0;
+			aux->j = 0;
+			aux->curr_token = add_token_back(lexer, aux->len_input);
+		}
+		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->type = input[aux->i];
+		aux->curr_token = add_token_back(lexer, aux->len_input);
+		(*f)++;
+	}
+	else if (*f == 0 && aux->curr_token->type == CHAR_DOLLAR)
+	{
+		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->j++;
 		(*f)++;
 	}
 }
@@ -204,6 +226,7 @@ void	process_char_def(char *input, t_token_aux *aux, t_lexer *lexer)
 	int	flag;
 
 	flag = 0;
+	printf("[%i] Current Token: %s\n", aux->curr_token->type, aux->curr_token->content);
 	handle_def_2char(input, aux, lexer, &flag);
 	handle_def_1char(input, aux, lexer, &flag);
 	handle_terminal(input, aux, lexer, &flag);
@@ -329,7 +352,8 @@ char	*find_ev(char *to_expand)
 	i = -1;
 	while (global->ev[++i])
 	{
-		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0)
+		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0
+				&& (global->ev[i][ft_strlen(to_expand)]) == '=')
 		{
 			result = ft_substr(global->ev[i], ft_strlen(to_expand) + 1,
 						ft_strlen(global->ev[i]));
@@ -424,7 +448,8 @@ void	token_expansion(t_token_aux *aux, t_lexer *lexer)
 	aux->curr_token = lexer->first_token;
 	while (aux->curr_token)
 	{
-		if (aux->curr_token->type == CHAR_DQUOTE)
+		if (aux->curr_token->type == CHAR_DQUOTE
+				|| aux->curr_token->type == CHAR_DEF)
 			token_expansion_aux(aux->curr_token);
 		aux->curr_token = aux->curr_token->next;
 	}
@@ -448,5 +473,12 @@ int	lexer_function(char *input, t_lexer *lexer)
 	process_char(input, &aux, lexer);
 	clean_last_tokens(&aux, lexer);
 	token_expansion(&aux, lexer);
+	while (lexer->first_token)
+	{
+		printf("This is the type: %i; and this is the content: %s\n", lexer->first_token->type, lexer->first_token->content);
+		lexer->first_token = lexer->first_token->next;
+	}
+	exit(EXIT_SUCCESS);
+	
 	return (0);
 }

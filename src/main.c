@@ -19,7 +19,11 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "<bnf.txt cat | grep commandline >ouput2";
 	// char *test = "|";
 	// char *test = "<bnf.txt";
-	char *test = ">output";
+	// char *test = ">output";
+	// char *test = "echo $USER";
+	// char *test = "echo$USER";
+	// char *test = "echo$USE";
+	char *test = "echo$PATH";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");

@@ -5,6 +5,7 @@
 #include <strings.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include "../libft/libft.h"
 #define DEF 0
 #define LEFT 0
@@ -148,6 +149,8 @@ void	free_lexer(t_lexer *lexer);
 
 /* executor.c */
 int	open_fd(char *path, int option);
+int	write_line(char *limit, int fd);
+int	heredoc(char *limiter);
 int	count_number_commands(t_ast *root_tree);
 int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);

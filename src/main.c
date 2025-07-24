@@ -17,13 +17,15 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "<input.txt ls -l cat cat >ouput1 | grep this >ouput2 | ls >output3";
 	// char *test = "<bnf.txt cat > output2";
 	// char *test = "<bnf.txt cat | grep commandline >ouput2";
+	// char *test = "<bnf.txt cat | grep commandline";
 	// char *test = "|";
 	// char *test = "<bnf.txt";
 	// char *test = ">output";
 	// char *test = "echo $USER";
 	// char *test = "echo$USER";
 	// char *test = "echo$USE";
-	char *test = "echo $PATH";
+	// char *test = "echo $PATH";
+	char *test = "<<DATA cat | grep This";
 
 	if (argc == -1)
 		printf("Don't forget to only provide one string\n");

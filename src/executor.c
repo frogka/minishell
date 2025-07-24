@@ -11,13 +11,68 @@ int	open_fd(char *path, int option)
 		fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	else if (option == CHAR_HEREDOC)
 	{
-		/* code */
+		printf("Entered in the IF statement\n");
+		fd = heredoc(path);
 	}
 	else if (option == CHAR_APPEND)
 		fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0777);
 	if (fd == -1 && option == 'I')
 		perror("Error: opening file");
 	return (fd);
+}
+
+int	write_line(char *limit, int fd)
+{
+	char	*line;
+	char	*limitor;
+	size_t	size;
+
+	limitor = ft_strjoin(limit, "\n");
+	size = ft_strlen(limitor);
+	while (1)
+	{
+		write(1, "> ", 2);
+		line = get_next_line(0);
+		if (size == ft_strlen(line) && ft_strncmp(limitor, line, size) == 0)
+		{
+			free(line);
+			free(limitor);
+			close(fd);
+			get_next_line(-1);
+			exit(EXIT_SUCCESS);
+		}
+		if (write(fd, line, ft_strlen(line)) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Writing lines", NULL, 1, NULL);
+		free(line);
+	}
+	exit(EXIT_FAILURE);
+}
+
+int	heredoc(char *limit)
+{
+	int	pipe_fd[2];
+	int	pid;
+
+	if (pipe(pipe_fd) == -1)
+		printf("To Add error Handler function\n");
+		// error_handler("Laying down the pipe(s)", NULL, 1, NULL);
+	pid = fork();
+	if (pid == -1)
+		printf("To Add error Handler function\n");
+		// error_handler("Fork creation", NULL, 1, NULL);
+	if (pid == 0)
+	{
+		close(pipe_fd[0]);
+		write_line(limit, pipe_fd[1]);
+	}
+	else
+	{
+		close(pipe_fd[1]);
+		waitpid(pid, NULL, 0);
+		return (pipe_fd[0]);
+	}
+	return (-1);
 }
 
 int	count_number_commands(t_ast *root_tree)
@@ -154,7 +209,7 @@ void	redirections_setup(t_ast *root)
 	{
 		if (is_redirect_token(root->type))
 		{
-			fd = open_fd(root->right->content,root->type);
+			fd = open_fd(root->right->content, root->type);
 			redirections_files_setup(fd, root->type, num_output_fd);
 		}
 		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)

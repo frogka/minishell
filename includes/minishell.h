@@ -3,6 +3,8 @@
 #include <signal.h>
 #include <stdio.h>
 #include <strings.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "../libft/libft.h"
 #define DEF 0
 #define LEFT 0
@@ -36,6 +38,7 @@ typedef struct s_px
 	int		**pipes;
 	int		num_pipes;
 	int		num_commands;
+	int		curr_index;
 	t_ast	*root_tree;
 }	t_px;
 
@@ -149,7 +152,7 @@ int	count_number_commands(t_ast *root_tree);
 int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);
 void	create_pipeline(t_px *px);
-int	executor_aux(t_px *px, t_ast *root_tree);
+void	executor_aux(t_px *px, t_ast *root_tree);
 void	child_pipe_setup(t_px *px, int i);
 int	executor(t_px *px, int i, t_ast *cmd_node);
 int	exec_command(t_px *px, t_ast *cmd_node);

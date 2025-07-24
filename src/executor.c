@@ -64,9 +64,10 @@ t_px	*initialize_px(t_ast *root_tree)
 	px->num_commands = count_number_commands(root_tree);
 	px->num_pipes = count_number_pipes(root_tree);
 	px->root_tree = root_tree;
+	px->curr_index = 0;
 	px->pids = malloc(sizeof(pid_t) * px->num_commands);
 	// malloc_error_handler(px->pids, EXIT_FAILURE);
-	// create_pipeline(px);
+	create_pipeline(px);
 	return (px);
 }
 
@@ -119,25 +120,21 @@ void	child_pipe_setup(t_px *px, int i)
 	}
 }
 
-int	executor_aux(t_px *px, t_ast *root_tree)
+void	executor_aux(t_px *px, t_ast *root_tree)
 {
-	int		i;
-
-	i = 0;
 	if (root_tree == NULL)
-		return (0);
+		return ;
 	if (is_default_token(root_tree->type))
 	{
-		printf("[%i] In here in the node with the content: %s\n", i, root_tree->content);
-		executor(px, i, root_tree);
-		i++;
+		printf("[%i] In here in the node with the content: %s\n", px->curr_index, root_tree->content);
+		executor(px, px->curr_index, root_tree);
+		px->curr_index++;
 	}
 	else if (is_operator_token(root_tree->type))
 	{
-		i += executor_aux(px, root_tree->left);
-		i += executor_aux(px, root_tree->right);
+		executor_aux(px, root_tree->left);
+		executor_aux(px, root_tree->right);
 	}
-	return (i);
 }
 
 int	executor(t_px *px, int i, t_ast *cmd_node)
@@ -331,7 +328,10 @@ void	execve_checker(char *f_path, char **comms, char **paths)
 
 int executor_function(t_ast *root_tree)
 {
+	int		j;
+	int		num;
 	t_px	*px;
+	int		status;
 	
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
@@ -343,5 +343,17 @@ int executor_function(t_ast *root_tree)
 	printf("px->root_tree: %p\n", px->root_tree);
 
 	executor_aux(px, px->root_tree);
+	j = -1;
+	while (++j < px->num_pipes)
+	{
+		close(px->pipes[j][READ]);
+		close(px->pipes[j][WRITE]);
+	}
+	num = -1;
+	while (++num < px->num_commands)
+		waitpid(px->pids[num], &status, 0);
+	free_px(px);
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
 	return (EXIT_SUCCESS);
 }

@@ -5,6 +5,7 @@ int main(int argc, char *argv[], char *envp[])
 	t_parser	*par;
 	t_ast		*root_tree;
 	t_lexer		*lexer;
+	t_global	*global;
 	char *test1 = argv[1];
 	// char *test = "grep \"$USER - THIS IS\n\n $PATH o yeah $? $\"";
 	// char *test = "cat | grep";
@@ -25,6 +26,7 @@ int main(int argc, char *argv[], char *envp[])
 	
 	/* inits */
 	init_global_struct(envp);
+	global = global_struct();
 	lexer = init_lexer();
 	if (!lexer)
 		return (EXIT_FAILURE);
@@ -36,8 +38,8 @@ int main(int argc, char *argv[], char *envp[])
 	print_ast_node(root_tree);
 	print_ast_sexpr(root_tree);
 
-	executor_function(root_tree);
-
+	global->exit_code = executor_function(root_tree);
+	printf("=================== After the executor function\n");
 	free_lexer(lexer);
 	free_global_struct();
 	free_ast(root_tree);

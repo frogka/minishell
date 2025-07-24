@@ -120,20 +120,62 @@ void	child_pipe_setup(t_px *px, int i)
 	}
 }
 
-void	executor_aux(t_px *px, t_ast *root_tree)
+void	redirections_files_setup(int fd, int type, int num_output_fd)
 {
-	if (root_tree == NULL)
+	if (fd == -1)
 		return ;
-	if (is_default_token(root_tree->type))
+	if (type == CHAR_INRED || type == CHAR_HEREDOC)
 	{
-		printf("[%i] In here in the node with the content: %s\n", px->curr_index, root_tree->content);
-		executor(px, px->curr_index, root_tree);
+		if (dup2(fd, STDIN_FILENO) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+		close(fd);
+	}
+	else
+	{
+		if (num_output_fd == 0)
+		{
+			if (dup2(fd, STDOUT_FILENO) == -1)
+				printf("To Add error Handler function\n");
+				// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+		}
+		close(fd);
+	}
+}
+
+void	redirections_setup(t_ast *root)
+{
+	int	fd;
+	int	num_output_fd;
+
+	num_output_fd = 0;
+	while (root)
+	{
+		if (is_redirect_token(root->type))
+		{
+			fd = open_fd(root->right->content,root->type);
+			redirections_files_setup(fd, root->type, num_output_fd);
+		}
+		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)
+			num_output_fd++;
+		root = root->right;
+	}	
+}
+
+void	executor_aux(t_px *px, t_ast *root)
+{
+	if (root == NULL)
+		return ;
+	if (is_default_token(root->type)/* || is_operator_token(root->type)*/)
+	{ 
+		printf("[%i] In here in the node with the content: %s\n", px->curr_index, root->content);
+		executor(px, px->curr_index, root);
 		px->curr_index++;
 	}
-	else if (is_operator_token(root_tree->type))
+	else if (is_operator_token(root->type))
 	{
-		executor_aux(px, root_tree->left);
-		executor_aux(px, root_tree->right);
+		executor_aux(px, root->left);
+		executor_aux(px, root->right);
 	}
 }
 
@@ -141,16 +183,15 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 {
 	int	j;
 
+	printf("\n\nEntered in the executor: %i\n\n", i);
 	px->pids[i] = fork();
 	if (px->pids[i] == -1)
 		exit(EXIT_FAILURE);
 	if (px->pids[i] == 0)
 	{
-		printf("Before with i = %i\n",i);
 		if (px->num_pipes !=0)
 		{
 			child_pipe_setup(px, i);
-			printf("After\n");
 			j = -1;
 			while (++j < px->num_pipes)
 			{
@@ -158,17 +199,17 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 				close(px->pipes[j][1]);
 			}
 		}
-		printf("After\n");
+		redirections_setup(cmd_node);
 		// if (px->argv[i + 2 + px->here_doc][0] == 0)
 		// 	error_handler("No command ''", NULL, 1, px);
-		printf("This is the command: %s; %i\n", cmd_node->content, i);
-		exec_command(px, cmd_node);
+		if (is_default_token(cmd_node->type))
+			exec_command(px, cmd_node);
 	}
 	return (0);
 }
 
 /* TODO - Update the function with minishell structs */
-int	exec_command(t_px *px, t_ast *cmd_node)
+void	exec_command(t_px *px, t_ast *cmd_node)
 {
 	int		j;
 	char	**paths;
@@ -196,7 +237,6 @@ int	exec_command(t_px *px, t_ast *cmd_node)
 	free_px(px);
 	printf("To Add error Handler function\n");
 	// error_handler("command not found", NULL, 127);
-	return (0);
 }
 
 char	**commands_extractor(t_ast *cmd_node)
@@ -351,7 +391,10 @@ int executor_function(t_ast *root_tree)
 	}
 	num = -1;
 	while (++num < px->num_commands)
+	{
+		printf("%i\n", px->pids[num]);
 		waitpid(px->pids[num], &status, 0);
+	}
 	free_px(px);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));

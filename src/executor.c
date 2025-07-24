@@ -128,7 +128,7 @@ int	executor_aux(t_px *px, t_ast *root_tree)
 		return (0);
 	if (is_default_token(root_tree->type))
 	{
-		printf("In here\n");
+		printf("[%i] In here in the node with the content: %s\n", i, root_tree->content);
 		executor(px, i, root_tree);
 		i++;
 	}
@@ -149,7 +149,7 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 		exit(EXIT_FAILURE);
 	if (px->pids[i] == 0)
 	{
-		printf("Before\n");
+		printf("Before with i = %i\n",i);
 		if (px->num_pipes !=0)
 		{
 			child_pipe_setup(px, i);
@@ -165,39 +165,168 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 		// if (px->argv[i + 2 + px->here_doc][0] == 0)
 		// 	error_handler("No command ''", NULL, 1, px);
 		printf("This is the command: %s; %i\n", cmd_node->content, i);
-		// exec_command(px, i);
+		exec_command(px, cmd_node);
 	}
 	return (0);
 }
 
 /* TODO - Update the function with minishell structs */
-int	exec_command(t_px *px, int i)
+int	exec_command(t_px *px, t_ast *cmd_node)
 {
 	int		j;
 	char	**paths;
 	char	*final_path;
 	char	**commands;
 
-	paths = path_extractor(px->envp);
+	paths = path_extractor();
 	if (paths == NULL)
-		error_handler("Error: problem envp file path", NULL, 1);
-	commands = ft_split(px->argv[i + 2 + px->here_doc], ' ');
+		printf("To Add error Handler function\n");
+		// error_handler("Error: problem envp file path", NULL, 1);
+	commands = commands_extractor(cmd_node);
 	j = 0;
 	while (paths[j])
 	{
 		final_path = ft_strjoin_3(paths[j], '/', commands[0]);
 		if (access(final_path, F_OK) == 0)
-			execve_checker(final_path, commands, paths, px);
+			execve_checker(final_path, commands, paths);
 		free (final_path);
 		j++;
 	}
 	if (access(commands[0], F_OK) == 0)
-		execve_checker(NULL, commands, paths, px);
+		execve_checker(NULL, commands, paths);
 	free_arrays(commands);
 	free_arrays(paths);
 	free_px(px);
-	error_handler("command not found", NULL, 127);
+	printf("To Add error Handler function\n");
+	// error_handler("command not found", NULL, 127);
 	return (0);
+}
+
+char	**commands_extractor(t_ast *cmd_node)
+{
+	t_ast	*temp;	
+	int		count;
+	char	**commands;
+
+	if (cmd_node == NULL || cmd_node->content == NULL
+			|| cmd_node->type != CHAR_DEF)
+		return (NULL);	
+	temp = cmd_node;
+	count = 0;
+	while (temp)
+	{
+		count++;
+		temp = temp->left;
+	}
+	commands = malloc(sizeof(char *) * (count + 1));
+	temp = cmd_node;
+	count = 0;
+	while (temp)
+	{
+		commands[count] = ft_strdup(temp->content);
+		temp = temp->left;
+		count++;
+	}
+	commands[count] = NULL;
+	return (commands);
+}
+
+char	**path_extractor(void)
+{
+	char		**paths;
+	t_global	*global;
+	int			i;
+	
+	global = global_struct();
+	i = -1;
+	while (global->ev[++i])
+	{
+		if (ft_strncmp(global->ev[i], "PATH=", 4) == 0)
+		{
+			paths = ft_split(global->ev[i] + 5, ':');
+			return (paths);
+		}
+	}
+	return (NULL);
+}
+
+char	*ft_strjoin_3(const char *s1, char connector, const char *s2)
+{
+	int		i;
+	int		j;
+	char	*res;
+
+	res = malloc((ft_strlen(s1) + 2 + ft_strlen(s2)) * sizeof(char));
+	if (!res)
+		printf("To Add error Handler function\n");
+		// error_handler("Malloc problem in ft_strjoin_3", NULL, 1, NULL);
+	i = 0;
+	while (s1[i])
+	{
+		res[i] = s1[i];
+		i++;
+	}
+	res[i] = connector;
+	i++;
+	j = 0;
+	while (s2[j])
+	{
+		res[i + j] = s2[j];
+		j++;
+	}
+	res[i + j] = 0;
+	return (res);
+}
+
+void	free_arrays(char **arrays)
+{
+	int	i;
+
+	i = 0;
+	while (arrays[i])
+	{
+		free(arrays[i]);
+		i++;
+	}
+	free(arrays);
+}
+
+void	free_px(t_px *px)
+{
+	int	i;
+
+	if (px->pipes != NULL)
+	{
+		i = -1;
+		while (++i < px->num_pipes)
+			free(px->pipes[i]);
+		free(px->pipes);
+	}
+	if (px->pids != NULL)
+		free(px->pids);
+	free(px);
+}
+
+void	execve_checker(char *f_path, char **comms, char **paths)
+{
+	t_global *global;
+
+	global = global_struct();
+	if (execve(f_path, comms, global->ev) == -1 && f_path != NULL)
+	{
+		free(f_path);
+		free_arrays(comms);
+		free_arrays(paths);
+		printf("To Add error Handler function\n");
+		// error_handler("execve call:", NULL, 1, px);
+	}
+	else if (execve(comms[0], comms, global->ev) == -1 && f_path == NULL)
+	{
+		free_arrays(comms);
+		free_arrays(paths);
+		printf("To Add error Handler function\n");
+		// error_handler("execve call:", NULL, 1, px);
+	}
 }
 
 int executor_function(t_ast *root_tree)

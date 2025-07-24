@@ -322,21 +322,19 @@ void	clean_last_tokens(t_token_aux *aux, t_lexer *lexer)
 char	*find_ev(char *to_expand)
 {
 	t_global 	*global;
-	t_list		*ev_list;
+	int			i;
 	char		*result;
 
 	global = global_struct();
-	ev_list = (*global->ev);
-	while (ev_list)
+	i = -1;
+	while (global->ev[++i])
 	{
-		if (ft_strncmp(to_expand, (char *) ev_list->content, ft_strlen(to_expand)) == 0)
+		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0)
 		{
-			result = ft_substr((char *)ev_list->content,
-						ft_strlen(to_expand) + 1,
-						ft_strlen((char *)ev_list->content));
+			result = ft_substr(global->ev[i], ft_strlen(to_expand) + 1,
+						ft_strlen(global->ev[i]));
 			return (result);
 		}
-		ev_list = ev_list->next;
 	}
 	return (ft_strdup(""));
 }

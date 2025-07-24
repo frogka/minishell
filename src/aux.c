@@ -4,21 +4,22 @@
 void	init_ev(char *envp[])
 {
 	t_global	*global;
-	t_list		*temp;
-	int			i;
+	int			count;
 
 	global = global_struct();
-	global->ev = malloc(sizeof(t_list*));
-	*global->ev = NULL;
-	i = 0;
-	while (envp[i])
+	count = 0;
+	if(envp == NULL || envp[0] == NULL)
 	{
-		temp = malloc(sizeof(t_list));
-		temp->content = ft_strdup(envp[i]);
-		temp->next = NULL;
-		ft_lstadd_back(global->ev, temp);
-		i++;
+		global->ev = NULL;
+		return ;
 	}
+	while (envp[count])
+		count++;
+	global->ev = malloc(sizeof(char*) * (count + 1));
+	count = -1;
+	while (envp[++count])
+		global->ev[count] = ft_strdup(envp[count]);
+	global->ev[count] = NULL;
 }
 
 void	init_global_struct(char *envp[])
@@ -33,16 +34,12 @@ void	init_global_struct(char *envp[])
 void	free_global_struct(void)
 {
 	t_global	*global;
-	t_list		*temp;
+	int			i;
 
 	global = global_struct();
-	while ((*global->ev))
-	{
-		temp = (*global->ev)->next;
-		free((*global->ev)->content);
-		free((*global->ev));
-		(*global->ev) = temp;
-	}
+	i = -1;
+	while (global->ev[++i])
+		free(global->ev[i]);
 	free(global->ev);
 }
 

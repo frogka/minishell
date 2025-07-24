@@ -21,7 +21,7 @@ typedef	struct s_ast
 typedef struct s_global
 {
 	int		exit_code;
-	t_list	**ev;
+	char	**ev;
 }	t_global;
 
 typedef struct s_bp
@@ -152,6 +152,14 @@ void	create_pipeline(t_px *px);
 int	executor_aux(t_px *px, t_ast *root_tree);
 void	child_pipe_setup(t_px *px, int i);
 int	executor(t_px *px, int i, t_ast *cmd_node);
+int	exec_command(t_px *px, t_ast *cmd_node);
+char	**commands_extractor(t_ast *cmd_node);
+char	**path_extractor(void);
+void	free_arrays(char **arrays);
+void	free_px(t_px *px);
+char	*ft_strjoin_3(const char *s1, char connector, const char *s2);
+void	execve_checker(char *f_path, char **comms, char **paths);
+
 int executor_function(t_ast *root_tree);
 
 

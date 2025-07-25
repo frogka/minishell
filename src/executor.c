@@ -20,8 +20,6 @@ int	open_fd(char *path, int option, t_px *px)
 		fd = heredoc(path, px);
 	else if (option == CHAR_APPEND)
 		fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0777);
-	else
-		printf("Entered in none\n");
 	if (fd == -1 && CHAR_INRED == 'I')
 		perror("Error: opening file");
 	return (fd);
@@ -48,8 +46,7 @@ int	write_line(char *limit, int fd, int fd_stdout)
 			exit(EXIT_SUCCESS);
 		}
 		if (write(fd, line, ft_strlen(line)) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Writing lines", NULL, 1, NULL);
+			error_handler("Writing lines", NULL, 1, NULL);
 		free(line);
 	}
 	exit(EXIT_FAILURE);
@@ -58,18 +55,13 @@ int	write_line(char *limit, int fd, int fd_stdout)
 int	heredoc(char *limit, t_px *px)
 {
 	int	pipe_fd[2];
-	// int	fd_previous_in;
-	// int	fd_previous_out;
 	int	pid;
 
 	if (pipe(pipe_fd) == -1)
-		printf("To Add error Handler function\n");
-		// error_handler("Laying down the pipe(s)", NULL, 1, NULL);
-
+		error_handler("Laying down the pipe(s)", NULL, 1, NULL);
 	pid = fork();
 	if (pid == -1)
-		printf("To Add error Handler function\n");
-		// error_handler("Fork creation", NULL, 1, NULL);
+		error_handler("Fork creation", NULL, 1, NULL);
 	if (pid == 0)
 	{
 		close(pipe_fd[READ]);
@@ -91,8 +83,7 @@ void	redirections_files_setup(int fd, int type, int num_output_fd)
 	if (type == CHAR_INRED || type == CHAR_HEREDOC)
 	{
 		if (dup2(fd, STDIN_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+			error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
 		close(fd);
 	}
 	else
@@ -100,8 +91,7 @@ void	redirections_files_setup(int fd, int type, int num_output_fd)
 		if (num_output_fd == 0)
 		{
 			if (dup2(fd, STDOUT_FILENO) == -1)
-				printf("To Add error Handler function\n");
-				// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+				error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
 		}
 		close(fd);
 	}
@@ -134,18 +124,15 @@ void	create_pipeline(t_px *px)
 		return ;
 	px->pipes = malloc(sizeof(int *) * (px->num_pipes));
 	if (!px->pipes)
-		printf("To Add error Handler function\n");
-		// error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
+		error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
 	i = 0;
 	while (i < px->num_pipes)
 	{
 		px->pipes[i] = malloc(sizeof(int) * 2);
 		if (!px->pipes[i])
-			printf("To Add error Handler function\n");
-			// error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
+			error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
 		if (pipe(px->pipes[i]) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Pipe creation", NULL, EXIT_FAILURE, NULL);
+			error_handler("Pipe creation", NULL, EXIT_FAILURE, NULL);
 		i++;
 	}
 }
@@ -155,23 +142,19 @@ void	child_pipe_setup(t_px *px, int i)
 	if (i == 0)
 	{
 		if (dup2(px->pipes[0][WRITE], STDOUT_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
+			error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
 	}
 	else if (i < px->num_pipes)
 	{
 		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
+			error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
 		if (dup2(px->pipes[i][WRITE], STDOUT_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
+			error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
 	}
 	else
 	{
 		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
+			error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
 	}
 }
 
@@ -215,7 +198,7 @@ t_px	*initialize_px(t_ast *root_tree)
 	t_px	*px;
 
 	px = malloc(sizeof(t_px));
-	// malloc_error_handler(px, EXIT_FAILURE);
+	malloc_error_handler(px, EXIT_FAILURE);
 	px->pids = NULL;
 	px->pipes = NULL;
 	px->num_commands = count_number_commands(root_tree);
@@ -226,7 +209,7 @@ t_px	*initialize_px(t_ast *root_tree)
 	px->fd_stdout = dup(STDOUT_FILENO);
 	if (px->num_commands != 0)
 		px->pids = malloc(sizeof(pid_t) * px->num_commands);
-	// malloc_error_handler(px->pids, EXIT_FAILURE);
+	malloc_error_handler(px->pids, EXIT_FAILURE);
 	create_pipeline(px);
 	return (px);
 }
@@ -271,12 +254,22 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 			}
 		}
 		redirections_setup(cmd_node, px);
-		// if (px->argv[i + 2 + px->here_doc][0] == 0)
-		// 	error_handler("No command ''", NULL, 1, px);
+		if (cmd_node->content == NULL || cmd_node->content[0] == 0)
+			error_handler("No command ''", NULL, 1, px);
 		if (is_default_token(cmd_node->type))
 			exec_command(px, cmd_node);
 	}
 	return (0);
+}
+
+void	free_struct_to_free()
+{
+	t_to_free	*to_free;
+
+	to_free = to_free_struct();
+	free_lexer(to_free->lexer);
+	free_ast(to_free->root_tree);
+	free_parser_struct(to_free->par);
 }
 
 void	exec_command(t_px *px, t_ast *cmd_node)
@@ -288,28 +281,27 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 
 	paths = path_extractor();
 	if (paths == NULL)
-		printf("To Add error Handler function\n");
-		// error_handler("Error: problem envp file path", NULL, 1);
+		error_handler("Error: problem envp file path", NULL, 1, NULL);
 	commands = commands_extractor(cmd_node);
 	j = 0;
 	while (paths[j])
 	{
 		final_path = ft_strjoin_3(paths[j], '/', commands[0]);
 		if (access(final_path, F_OK) == 0)
-			execve_checker(final_path, commands, paths);
+			execve_checker(final_path, commands, paths, px);
 		free (final_path);
 		j++;
 	}
 	if (access(commands[0], F_OK) == 0)
-		execve_checker(NULL, commands, paths);
+		execve_checker(NULL, commands, paths, px);
 	free_arrays(commands);
 	free_arrays(paths);
 	free_px(px);
-	printf("To Add error Handler function\n");
-	// error_handler("command not found", NULL, 127);
+	free_struct_to_free();
+	error_handler("command not found", NULL, 127, NULL);
 }
 
-void	execve_checker(char *f_path, char **comms, char **paths)
+void	execve_checker(char *f_path, char **comms, char **paths, t_px *px)
 {
 	t_global *global;
 
@@ -319,15 +311,13 @@ void	execve_checker(char *f_path, char **comms, char **paths)
 		free(f_path);
 		free_arrays(comms);
 		free_arrays(paths);
-		printf("To Add error Handler function\n");
-		// error_handler("execve call:", NULL, 1, px);
+		error_handler("execve call:", NULL, 1, px);
 	}
 	else if (execve(comms[0], comms, global->ev) == -1 && f_path == NULL)
 	{
 		free_arrays(comms);
 		free_arrays(paths);
-		printf("To Add error Handler function\n");
-		// error_handler("execve call:", NULL, 1, px);
+		error_handler("execve call:", NULL, 1, px);
 	}
 }
 
@@ -365,6 +355,36 @@ int executor_function(t_ast *root_tree)
 /* End of Executor Functions */
 
 /* Executor AUX functions */
+
+void	error_handler(char *msg, char *file_name, int error_code, t_px *px)
+{
+	char	*err_msg;
+
+	if (file_name == NULL && px == NULL)
+	{
+		perror(msg);
+		exit(error_code);
+	}
+	else if (file_name == NULL && px != NULL)
+	{
+		perror(msg);
+		free_px(px);
+		exit(error_code);
+	}
+	else
+	{
+		err_msg = ft_strjoin("./pipex: ", file_name);
+		perror(err_msg);
+		free(err_msg);
+		exit(error_code);
+	}
+}
+
+void	malloc_error_handler(void *ptr, int error_code)
+{
+	if (!ptr)
+		error_handler("Error with malloc", NULL, error_code, NULL);
+}
 
 char	**commands_extractor(t_ast *cmd_node)
 {
@@ -422,8 +442,7 @@ char	*ft_strjoin_3(const char *s1, char connector, const char *s2)
 
 	res = malloc((ft_strlen(s1) + 2 + ft_strlen(s2)) * sizeof(char));
 	if (!res)
-		printf("To Add error Handler function\n");
-		// error_handler("Malloc problem in ft_strjoin_3", NULL, 1, NULL);
+		error_handler("Malloc problem in ft_strjoin_3", NULL, 1, NULL);
 	i = 0;
 	while (s1[i])
 	{

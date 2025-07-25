@@ -100,8 +100,17 @@ typedef struct s_parser
 	int		count_token;
 }	t_parser;
 
+typedef	struct s_to_free
+{
+	t_parser	*par;
+	t_ast		*root_tree;
+	t_lexer		*lexer;
+}	t_to_free;
+
+
 /* lexer.c */
 t_global *global_struct(void);
+t_to_free	*to_free_struct(void);
 int	check_matching_quotes(char *input);
 t_token	*get_last_token(t_lexer *lexer);
 t_token	*get_previous_token(t_token *first_token, t_token *curr_token);
@@ -168,8 +177,10 @@ char	**path_extractor(void);
 void	free_arrays(char **arrays);
 void	free_px(t_px *px);
 char	*ft_strjoin_3(const char *s1, char connector, const char *s2);
-void	execve_checker(char *f_path, char **comms, char **paths);
+void	execve_checker(char *f_path, char **comms, char **paths, t_px *px);
 int executor_function(t_ast *root_tree);
+void	error_handler(char *msg, char *file_name, int error_code, t_px *px);
+void	malloc_error_handler(void *ptr, int error_code);
 
 /* terminal.c */
 void	terminal();

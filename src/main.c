@@ -27,13 +27,13 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "<<DATA cat";
 
 	(void)argv;
+	if (argc != 1)
+	{
+		printf("minishell: Cannot be called with any parameter\n");
+		return (EXIT_SUCCESS);
+	}
 	init_global_struct(envp);
 	terminal();
-	if (argc != -1)
-		printf("Don't forget to only provide one string\n");
-
-	// printf("This is the string being tested: '%s'\n", test);
-	
 	free_global_struct();
 	return (0);
 }

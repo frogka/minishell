@@ -7,6 +7,13 @@ t_global *global_struct(void)
 	return (&global);
 }
 
+t_to_free	*to_free_struct(void)
+{
+	static t_to_free	to_free;
+
+	return (&to_free);
+}
+
 /* Start Init functions */
 
 void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
@@ -23,7 +30,7 @@ void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
 t_token	*init_token(t_token *token, int len_input)
 {
 	token = malloc(sizeof(t_token));
-	token->content = ft_calloc(len_input, sizeof(char));
+	token->content = ft_calloc(len_input + 1, sizeof(char));
 	token->next = NULL;
 	token->type = 0;
 	return (token);
@@ -456,6 +463,8 @@ void	token_expansion_aux(t_token *token)
 
 void	token_expansion(t_token_aux *aux, t_lexer *lexer)
 {
+	if (lexer == NULL || lexer->first_token == NULL)
+		return;
 	aux->curr_token = lexer->first_token;
 	while (aux->curr_token)
 	{

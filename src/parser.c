@@ -206,6 +206,7 @@ void	free_ast(t_ast *root)
 	}
 }
 
+/* TODO: To check if this is the source of the double free of $USER */
 void	free_parser_struct(t_parser *par)
 {
 	if (par)

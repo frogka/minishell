@@ -17,7 +17,8 @@ SRC_FILES = lexer.c \
 			parser.c \
 			main.c \
 			aux.c \
-			executor.c
+			executor.c \
+			terminal.c
 
 # Object Files
 OBJS_FILES = $(SRC_FILES:.c=.o)
@@ -25,6 +26,7 @@ OBJS = $(addprefix $(OBJS_DIR),$(OBJS_FILES))
 
 # Libraries
 LIBFT = $(LIBFT_DIR)libft.a
+LIBRARIES = -lft -lreadline
 
 all: ${NAME}
 
@@ -33,7 +35,7 @@ $(LIBFT):
 
 # creating executables
 ${NAME}: $(LIBFT) $(OBJS_DIR) $(OBJS) 
-	${CC} ${CFLAGS} ${OBJS} -L${LIBFT_DIR} -lft -o ${NAME}
+	${CC} ${CFLAGS} ${OBJS} -L${LIBFT_DIR} ${LIBRARIES} -o ${NAME}
 
 # Creating Object file folder
 $(OBJS_DIR):

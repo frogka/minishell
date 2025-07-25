@@ -1,5 +1,10 @@
 #include "../includes/minishell.h"
 
+/* TODOS
+===> Add error handling functions
+===> When doing $USER, there is a double free problem
+*/
+
 /* Start of Redirections */
 
 int	open_fd(char *path, int option, t_px *px)
@@ -234,7 +239,7 @@ void	executor_aux(t_px *px, t_ast *root)
 {
 	if (root == NULL)
 		return ;
-	if (is_default_token(root->type)/* || is_operator_token(root->type)*/)
+	if (is_default_token(root->type))
 	{ 
 		executor(px, px->curr_index, root);
 		px->curr_index++;
@@ -336,12 +341,6 @@ int executor_function(t_ast *root_tree)
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
-	printf("px->pids: %p\n", px->pids);
-	printf("px->pipes: %p\n", px->pipes);
-	printf("px->num_pipes: %i\n", px->num_pipes);
-	printf("px->num_commands: %i\n", px->num_commands);
-	printf("px->root_tree: %p\n", px->root_tree);
-
 	executor_aux(px, px->root_tree);
 	j = -1;
 	while (++j < px->num_pipes)

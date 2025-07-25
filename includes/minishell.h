@@ -1,6 +1,8 @@
 #ifndef MINISHELL_H
 #define MINISHELL_H
 #include <signal.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include <stdio.h>
 #include <strings.h>
 #include <sys/types.h>
@@ -167,8 +169,10 @@ void	free_arrays(char **arrays);
 void	free_px(t_px *px);
 char	*ft_strjoin_3(const char *s1, char connector, const char *s2);
 void	execve_checker(char *f_path, char **comms, char **paths);
-
 int executor_function(t_ast *root_tree);
+
+/* terminal.c */
+void	terminal();
 
 
 #endif

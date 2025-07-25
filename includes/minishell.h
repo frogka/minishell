@@ -185,5 +185,7 @@ void	malloc_error_handler(void *ptr, int error_code);
 /* terminal.c */
 void	terminal();
 
+/* builtin.c */
+void	pwd(void);
 
 #endif

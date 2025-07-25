@@ -298,6 +298,7 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	free_arrays(paths);
 	free_px(px);
 	free_struct_to_free();
+	free_global_struct();
 	error_handler("command not found", NULL, 127, NULL);
 }
 

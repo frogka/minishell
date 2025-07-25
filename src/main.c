@@ -33,6 +33,7 @@ int main(int argc, char *argv[], char *envp[])
 		return (EXIT_SUCCESS);
 	}
 	init_global_struct(envp);
+	pwd();
 	terminal();
 	free_global_struct();
 	return (0);

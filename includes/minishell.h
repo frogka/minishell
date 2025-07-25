@@ -40,6 +40,8 @@ typedef struct s_px
 	int		num_pipes;
 	int		num_commands;
 	int		curr_index;
+	int		fd_stdout;
+	int		fd_stdin;
 	t_ast	*root_tree;
 }	t_px;
 
@@ -148,9 +150,9 @@ t_lexer	*init_lexer(void);
 void	free_lexer(t_lexer *lexer);
 
 /* executor.c */
-int	open_fd(char *path, int option);
-int	write_line(char *limit, int fd);
-int	heredoc(char *limiter);
+int	open_fd(char *path, int option, t_px *px);
+int	write_line(char *limit, int fd, int fd_stdout);
+int	heredoc(char *limiter, t_px *px);
 int	count_number_commands(t_ast *root_tree);
 int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);

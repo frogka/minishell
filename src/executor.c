@@ -1,6 +1,6 @@
 #include "../includes/minishell.h"
 
-int	open_fd(char *path, int option)
+int	open_fd(char *path, int option, t_px *px)
 {
 	int	fd;
 
@@ -10,18 +10,17 @@ int	open_fd(char *path, int option)
 	else if (option == CHAR_OUTRED)
 		fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	else if (option == CHAR_HEREDOC)
-	{
-		printf("Entered in the IF statement\n");
-		fd = heredoc(path);
-	}
+		fd = heredoc(path, px);
 	else if (option == CHAR_APPEND)
 		fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0777);
-	if (fd == -1 && option == 'I')
+	else
+		printf("Entered in none\n");
+	if (fd == -1 && CHAR_INRED == 'I')
 		perror("Error: opening file");
 	return (fd);
 }
 
-int	write_line(char *limit, int fd)
+int	write_line(char *limit, int fd, int fd_stdout)
 {
 	char	*line;
 	char	*limitor;
@@ -31,7 +30,7 @@ int	write_line(char *limit, int fd)
 	size = ft_strlen(limitor);
 	while (1)
 	{
-		write(1, "> ", 2);
+		write(fd_stdout, "> ", 2);
 		line = get_next_line(0);
 		if (size == ft_strlen(line) && ft_strncmp(limitor, line, size) == 0)
 		{
@@ -49,28 +48,31 @@ int	write_line(char *limit, int fd)
 	exit(EXIT_FAILURE);
 }
 
-int	heredoc(char *limit)
+int	heredoc(char *limit, t_px *px)
 {
 	int	pipe_fd[2];
+	// int	fd_previous_in;
+	// int	fd_previous_out;
 	int	pid;
 
 	if (pipe(pipe_fd) == -1)
 		printf("To Add error Handler function\n");
 		// error_handler("Laying down the pipe(s)", NULL, 1, NULL);
+
 	pid = fork();
 	if (pid == -1)
 		printf("To Add error Handler function\n");
 		// error_handler("Fork creation", NULL, 1, NULL);
 	if (pid == 0)
 	{
-		close(pipe_fd[0]);
-		write_line(limit, pipe_fd[1]);
+		close(pipe_fd[READ]);
+		write_line(limit, pipe_fd[WRITE], px->fd_stdout);
 	}
 	else
 	{
-		close(pipe_fd[1]);
+		close(pipe_fd[WRITE]);
 		waitpid(pid, NULL, 0);
-		return (pipe_fd[0]);
+		return (pipe_fd[READ]);
 	}
 	return (-1);
 }
@@ -83,9 +85,7 @@ int	count_number_commands(t_ast *root_tree)
 	if (root_tree == NULL)
 		return (0);
 	if (is_default_token(root_tree->type))
-	{
 		total++;
-	}
 	else if (is_operator_token(root_tree->type))
 	{
 		total += count_number_commands(root_tree->left);
@@ -120,6 +120,8 @@ t_px	*initialize_px(t_ast *root_tree)
 	px->num_pipes = count_number_pipes(root_tree);
 	px->root_tree = root_tree;
 	px->curr_index = 0;
+	px->fd_stdin = dup(STDIN_FILENO);
+	px->fd_stdout = dup(STDOUT_FILENO);
 	if (px->num_commands != 0)
 		px->pids = malloc(sizeof(pid_t) * px->num_commands);
 	// malloc_error_handler(px->pids, EXIT_FAILURE);
@@ -132,7 +134,7 @@ void	create_pipeline(t_px *px)
 	int	i;
 
 	if (px->num_pipes == 0)
-		return ;	
+		return ;
 	px->pipes = malloc(sizeof(int *) * (px->num_pipes));
 	if (!px->pipes)
 		printf("To Add error Handler function\n");
@@ -182,7 +184,6 @@ void	redirections_files_setup(int fd, int type, int num_output_fd)
 		return ;
 	if (type == CHAR_INRED || type == CHAR_HEREDOC)
 	{
-		printf("In the redirections_files_setup function \n");
 		if (dup2(fd, STDIN_FILENO) == -1)
 			printf("To Add error Handler function\n");
 			// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
@@ -200,7 +201,7 @@ void	redirections_files_setup(int fd, int type, int num_output_fd)
 	}
 }
 
-void	redirections_setup(t_ast *root)
+void	redirections_setup(t_ast *root, t_px *px)
 {
 	int	fd;
 	int	num_output_fd;
@@ -208,12 +209,9 @@ void	redirections_setup(t_ast *root)
 	num_output_fd = 0;
 	while (root)
 	{
-		printf("This is the node: %s\n", root->content);
 		if (is_redirect_token(root->type))
 		{
-			printf("Before open_fd\n");
-			fd = open_fd(root->right->content, root->type);
-			printf("After open_fd: %i\n", fd);
+			fd = open_fd(root->right->content, root->type, px);
 			redirections_files_setup(fd, root->type, num_output_fd);
 		}
 		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)
@@ -228,7 +226,6 @@ void	executor_aux(t_px *px, t_ast *root)
 		return ;
 	if (is_default_token(root->type)/* || is_operator_token(root->type)*/)
 	{ 
-		printf("[%i] In here in the node with the content: %s\n", px->curr_index, root->content);
 		executor(px, px->curr_index, root);
 		px->curr_index++;
 	}
@@ -243,7 +240,6 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 {
 	int	j;
 
-	printf("\n\nEntered in the executor: %i\n\n", i);
 	px->pids[i] = fork();
 	if (px->pids[i] == -1)
 		exit(EXIT_FAILURE);
@@ -259,9 +255,7 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 				close(px->pipes[j][1]);
 			}
 		}
-		printf("Before redirections_setup\n");
-		redirections_setup(cmd_node);
-		printf("After redirections_setup\n");
+		redirections_setup(cmd_node, px);
 		// if (px->argv[i + 2 + px->here_doc][0] == 0)
 		// 	error_handler("No command ''", NULL, 1, px);
 		if (is_default_token(cmd_node->type))
@@ -453,13 +447,10 @@ int executor_function(t_ast *root_tree)
 	}
 	num = -1;
 	while (++num < px->num_commands)
-	{
-		printf("%i\n", px->pids[num]);
 		waitpid(px->pids[num], &status, 0);
-	}
 	if (px->num_commands == 0)
 	{
-		redirections_setup(px->root_tree);
+		redirections_setup(px->root_tree, px);
 	}
 	num = px->num_commands;	
 	free_px(px);

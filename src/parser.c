@@ -1,5 +1,7 @@
 #include "../includes/minishell.h"
 
+/* Start of AUX functions */
+
 void	print_ast_node(t_ast *node)
 {
 	if (node == NULL)
@@ -13,9 +15,63 @@ void	print_ast_node(t_ast *node)
 	printf("===============\n\n");
 }
 
-void	ast_token_next(t_parser *par)
+void	print_ast_sexpr(t_ast *root)
 {
-	par->curr_token = par->curr_token->next;
+	if (!root)
+	{
+		printf("()\n");
+		return;
+	}
+	
+	ast_to_sexpr(root);
+	printf("\n");
+}
+
+void	print_node_leafs(t_ast *node)
+{
+	t_ast	*l_node;
+	t_ast	*r_node;
+
+	print_ast_node(node);
+	l_node = node->left;
+	r_node = node->right;
+	while (l_node != NULL)
+	{
+		printf("This is a left node: %s\n", l_node->content);
+		l_node = l_node->left;
+	}
+	while (r_node != NULL)
+	{
+		printf("This is a left node: %s\n", r_node->content);
+		r_node = r_node->left;
+	}
+}
+
+void	ast_to_sexpr(t_ast *node)
+{
+	if (!node)
+		return;
+
+	if (!node->left && !node->right)
+	{
+		if (node->content)
+			printf("%s", node->content);
+		return;
+	}
+	printf("(");
+	if (node->content)
+		printf("%s", node->content);
+	if (node->left)
+	{
+		printf(" ");
+		ast_to_sexpr(node->left);
+	}
+	if (node->right)
+	{
+		printf(" ");
+		ast_to_sexpr(node->right);
+	}
+	printf(")");
 }
 
 t_ast	*create_ast_node(int type, char *content)
@@ -40,29 +96,6 @@ t_ast	*create_ast_structure(t_token *token, t_ast *l_node, t_ast *r_node)
 	node->left = l_node;
 	node->right = r_node;
 	return (node);
-}
-
-t_parser	*init_paser(t_lexer *lex)
-{
-	t_parser *par;
-
-	par = malloc(sizeof(t_parser));
-	par->root = malloc(sizeof(t_ast *));
-	if (par == NULL || par->root == NULL)
-		return (NULL);
-	par->initial_token = lex->first_token;
-	par->curr_token = lex->first_token;
-	return(par);
-}
-
-void	free_parser_struct(t_parser *par)
-{
-	if (par)
-	{
-		free(par->root);
-		free(par);
-	}
-	
 }
 
 int	is_default_token(int type)
@@ -103,40 +136,6 @@ int	is_operator_token(int type)
 	}
 	else
 		return (0);
-}
-
-void	infix_binding_power(int type, t_bp *bp)
-{
-	if (type == ';' || type == '&')
-	{
-		bp->l = 1;
-		bp->r = 2;
-	}
-	else if (type == CHAR_AND || type == CHAR_OR)
-	{
-		bp->l = 3;
-		bp->r = 4;
-	}
-	else if (type == CHAR_PIPE)
-	{
-		bp->l = 5;
-		bp->r = 6;
-	}
-	else
-	{
-		bp->l = -1;
-		bp->r = -1;
-	}
-}
-
-int	prefix_binding_power(int type, int side)
-{
-	if (is_redirect_token(type) && side == LEFT)
-		return (1);
-	else if (is_redirect_token(type) && side == RIGHT)
-		return (8);
-	else
-		return (-1);
 }
 
 void	ast_node_addback(t_ast *l_node, t_token *token)
@@ -192,63 +191,75 @@ void	ast_node_placeback(t_ast **node_root, t_ast *node_toadd, int side)
 	}
 }
 
-void	print_node_leafs(t_ast *node)
-{
-	t_ast	*l_node;
-	t_ast	*r_node;
+/* End of AUX functions */
 
-	print_ast_node(node);
-	l_node = node->left;
-	r_node = node->right;
-	while (l_node != NULL)
+/* Start of Free functions */
+
+void	free_ast(t_ast *root)
+{
+	if (root)
 	{
-		printf("This is a left node: %s\n", l_node->content);
-		l_node = l_node->left;
-	}
-	while (r_node != NULL)
-	{
-		printf("This is a left node: %s\n", r_node->content);
-		r_node = r_node->left;
+		free_ast(root->left);
+		free_ast(root->right);
+		free(root->content);
+		free(root);
 	}
 }
 
-void print_ast_sexpr(t_ast *root)
+void	free_parser_struct(t_parser *par)
 {
-	if (!root)
+	if (par)
 	{
-		printf("()\n");
-		return;
+		free(par->root);
+		free(par);
 	}
 	
-	ast_to_sexpr(root);
-	printf("\n");
 }
 
-void ast_to_sexpr(t_ast *node)
-{
-	if (!node)
-		return;
+/* End of Free functions*/
 
-	if (!node->left && !node->right)
+/* Start Parsing Functions*/
+
+void	ast_token_next(t_parser *par)
+{
+	par->curr_token = par->curr_token->next;
+}
+
+t_parser	*init_paser(t_lexer *lex)
+{
+	t_parser *par;
+
+	par = malloc(sizeof(t_parser));
+	par->root = malloc(sizeof(t_ast *));
+	if (par == NULL || par->root == NULL)
+		return (NULL);
+	par->initial_token = lex->first_token;
+	par->curr_token = lex->first_token;
+	return(par);
+}
+
+void	infix_binding_power(int type, t_bp *bp)
+{
+	if (type == ';' || type == '&')
 	{
-		if (node->content)
-			printf("%s", node->content);
-		return;
+		bp->l = 1;
+		bp->r = 2;
 	}
-	printf("(");
-	if (node->content)
-		printf("%s", node->content);
-	if (node->left)
+	else if (type == CHAR_AND || type == CHAR_OR)
 	{
-		printf(" ");
-		ast_to_sexpr(node->left);
+		bp->l = 3;
+		bp->r = 4;
 	}
-	if (node->right)
+	else if (type == CHAR_PIPE)
 	{
-		printf(" ");
-		ast_to_sexpr(node->right);
+		bp->l = 5;
+		bp->r = 6;
 	}
-	printf(")");
+	else
+	{
+		bp->l = -1;
+		bp->r = -1;
+	}
 }
 
 t_ast	*parse_simple_command(t_parser *par)
@@ -347,13 +358,4 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 	return (l_node);
 }
 
-void	free_ast(t_ast *root)
-{
-	if (root)
-	{
-		free_ast(root->left);
-		free_ast(root->right);
-		free(root->content);
-		free(root);
-	}
-}
+/* End Parsing functions */

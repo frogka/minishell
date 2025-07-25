@@ -1,5 +1,7 @@
 #include "../includes/minishell.h"
 
+/* Start of Redirections */
+
 int	open_fd(char *path, int option, t_px *px)
 {
 	int	fd;
@@ -77,6 +79,101 @@ int	heredoc(char *limit, t_px *px)
 	return (-1);
 }
 
+void	redirections_files_setup(int fd, int type, int num_output_fd)
+{
+	if (fd == -1)
+		return ;
+	if (type == CHAR_INRED || type == CHAR_HEREDOC)
+	{
+		if (dup2(fd, STDIN_FILENO) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+		close(fd);
+	}
+	else
+	{
+		if (num_output_fd == 0)
+		{
+			if (dup2(fd, STDOUT_FILENO) == -1)
+				printf("To Add error Handler function\n");
+				// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+		}
+		close(fd);
+	}
+}
+
+void	redirections_setup(t_ast *root, t_px *px)
+{
+	int	fd;
+	int	num_output_fd;
+
+	num_output_fd = 0;
+	while (root)
+	{
+		if (is_redirect_token(root->type))
+		{
+			fd = open_fd(root->right->content, root->type, px);
+			redirections_files_setup(fd, root->type, num_output_fd);
+		}
+		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)
+			num_output_fd++;
+		root = root->right;
+	}	
+}
+
+void	create_pipeline(t_px *px)
+{
+	int	i;
+
+	if (px->num_pipes == 0)
+		return ;
+	px->pipes = malloc(sizeof(int *) * (px->num_pipes));
+	if (!px->pipes)
+		printf("To Add error Handler function\n");
+		// error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
+	i = 0;
+	while (i < px->num_pipes)
+	{
+		px->pipes[i] = malloc(sizeof(int) * 2);
+		if (!px->pipes[i])
+			printf("To Add error Handler function\n");
+			// error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
+		if (pipe(px->pipes[i]) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Pipe creation", NULL, EXIT_FAILURE, NULL);
+		i++;
+	}
+}
+
+void	child_pipe_setup(t_px *px, int i)
+{
+	if (i == 0)
+	{
+		if (dup2(px->pipes[0][WRITE], STDOUT_FILENO) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
+	}
+	else if (i < px->num_pipes)
+	{
+		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
+		if (dup2(px->pipes[i][WRITE], STDOUT_FILENO) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
+	}
+	else
+	{
+		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
+			printf("To Add error Handler function\n");
+			// error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
+	}
+}
+
+/* End of Redirections */
+
+/* Start of Initializations */
+
 int	count_number_commands(t_ast *root_tree)
 {
 	int	total;
@@ -129,96 +226,9 @@ t_px	*initialize_px(t_ast *root_tree)
 	return (px);
 }
 
-void	create_pipeline(t_px *px)
-{
-	int	i;
+/* End of Initializations*/
 
-	if (px->num_pipes == 0)
-		return ;
-	px->pipes = malloc(sizeof(int *) * (px->num_pipes));
-	if (!px->pipes)
-		printf("To Add error Handler function\n");
-		// error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
-	i = 0;
-	while (i < px->num_pipes)
-	{
-		px->pipes[i] = malloc(sizeof(int) * 2);
-		if (!px->pipes[i])
-			printf("To Add error Handler function\n");
-			// error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
-		if (pipe(px->pipes[i]) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Pipe creation", NULL, EXIT_FAILURE, NULL);
-		i++;
-	}
-}
-
-void	child_pipe_setup(t_px *px, int i)
-{
-	if (i == 0)
-	{
-		if (dup2(px->pipes[0][WRITE], STDOUT_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
-	}
-	else if (i < px->num_pipes)
-	{
-		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
-		if (dup2(px->pipes[i][WRITE], STDOUT_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
-	}
-	else
-	{
-		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
-	}
-}
-
-void	redirections_files_setup(int fd, int type, int num_output_fd)
-{
-	if (fd == -1)
-		return ;
-	if (type == CHAR_INRED || type == CHAR_HEREDOC)
-	{
-		if (dup2(fd, STDIN_FILENO) == -1)
-			printf("To Add error Handler function\n");
-			// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
-		close(fd);
-	}
-	else
-	{
-		if (num_output_fd == 0)
-		{
-			if (dup2(fd, STDOUT_FILENO) == -1)
-				printf("To Add error Handler function\n");
-				// error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
-		}
-		close(fd);
-	}
-}
-
-void	redirections_setup(t_ast *root, t_px *px)
-{
-	int	fd;
-	int	num_output_fd;
-
-	num_output_fd = 0;
-	while (root)
-	{
-		if (is_redirect_token(root->type))
-		{
-			fd = open_fd(root->right->content, root->type, px);
-			redirections_files_setup(fd, root->type, num_output_fd);
-		}
-		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)
-			num_output_fd++;
-		root = root->right;
-	}	
-}
+/* Start of Executor functions */
 
 void	executor_aux(t_px *px, t_ast *root)
 {
@@ -264,7 +274,6 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 	return (0);
 }
 
-/* TODO - Update the function with minishell structs */
 void	exec_command(t_px *px, t_ast *cmd_node)
 {
 	int		j;
@@ -294,6 +303,69 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	printf("To Add error Handler function\n");
 	// error_handler("command not found", NULL, 127);
 }
+
+void	execve_checker(char *f_path, char **comms, char **paths)
+{
+	t_global *global;
+
+	global = global_struct();
+	if (execve(f_path, comms, global->ev) == -1 && f_path != NULL)
+	{
+		free(f_path);
+		free_arrays(comms);
+		free_arrays(paths);
+		printf("To Add error Handler function\n");
+		// error_handler("execve call:", NULL, 1, px);
+	}
+	else if (execve(comms[0], comms, global->ev) == -1 && f_path == NULL)
+	{
+		free_arrays(comms);
+		free_arrays(paths);
+		printf("To Add error Handler function\n");
+		// error_handler("execve call:", NULL, 1, px);
+	}
+}
+
+int executor_function(t_ast *root_tree)
+{
+	int		j;
+	int		num;
+	t_px	*px;
+	int		status;
+	
+	if (root_tree == NULL)
+		return (EXIT_FAILURE);
+	px = initialize_px(root_tree);
+	printf("px->pids: %p\n", px->pids);
+	printf("px->pipes: %p\n", px->pipes);
+	printf("px->num_pipes: %i\n", px->num_pipes);
+	printf("px->num_commands: %i\n", px->num_commands);
+	printf("px->root_tree: %p\n", px->root_tree);
+
+	executor_aux(px, px->root_tree);
+	j = -1;
+	while (++j < px->num_pipes)
+	{
+		close(px->pipes[j][READ]);
+		close(px->pipes[j][WRITE]);
+	}
+	num = -1;
+	while (++num < px->num_commands)
+		waitpid(px->pids[num], &status, 0);
+	if (px->num_commands == 0)
+	{
+		redirections_setup(px->root_tree, px);
+	}
+	num = px->num_commands;	
+	free_px(px);
+	if (num != 0 && WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	return (EXIT_SUCCESS);
+}
+
+/* End of Executor Functions */
+
+/* Executor AUX functions */
 
 char	**commands_extractor(t_ast *cmd_node)
 {
@@ -400,61 +472,4 @@ void	free_px(t_px *px)
 	free(px);
 }
 
-void	execve_checker(char *f_path, char **comms, char **paths)
-{
-	t_global *global;
-
-	global = global_struct();
-	if (execve(f_path, comms, global->ev) == -1 && f_path != NULL)
-	{
-		free(f_path);
-		free_arrays(comms);
-		free_arrays(paths);
-		printf("To Add error Handler function\n");
-		// error_handler("execve call:", NULL, 1, px);
-	}
-	else if (execve(comms[0], comms, global->ev) == -1 && f_path == NULL)
-	{
-		free_arrays(comms);
-		free_arrays(paths);
-		printf("To Add error Handler function\n");
-		// error_handler("execve call:", NULL, 1, px);
-	}
-}
-
-int executor_function(t_ast *root_tree)
-{
-	int		j;
-	int		num;
-	t_px	*px;
-	int		status;
-	
-	if (root_tree == NULL)
-		return (EXIT_FAILURE);
-	px = initialize_px(root_tree);
-	printf("px->pids: %p\n", px->pids);
-	printf("px->pipes: %p\n", px->pipes);
-	printf("px->num_pipes: %i\n", px->num_pipes);
-	printf("px->num_commands: %i\n", px->num_commands);
-	printf("px->root_tree: %p\n", px->root_tree);
-
-	executor_aux(px, px->root_tree);
-	j = -1;
-	while (++j < px->num_pipes)
-	{
-		close(px->pipes[j][READ]);
-		close(px->pipes[j][WRITE]);
-	}
-	num = -1;
-	while (++num < px->num_commands)
-		waitpid(px->pids[num], &status, 0);
-	if (px->num_commands == 0)
-	{
-		redirections_setup(px->root_tree, px);
-	}
-	num = px->num_commands;	
-	free_px(px);
-	if (num != 0 && WIFEXITED(status))
-		return (WEXITSTATUS(status));
-	return (EXIT_SUCCESS);
-}
+/* END of Executor AUX functions*/

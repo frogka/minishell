@@ -25,7 +25,7 @@ int main(int argc, char *argv[], char *envp[])
 	// char *test = "echo$USER";
 	// char *test = "echo$USE";
 	// char *test = "echo $PATH";
-	char *test = "<<DATA cat | grep This";
+	// char *test = "<<DATA cat | grep This";
 	// char *test = "<<DATA cat | grep This | <<NOTHING cat";
 	// char *test = "<<DATA cat";
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[], char *envp[])
 	{
 		;
 	}
-	printf("This is the string being tested: '%s'\n", test); 
+	// printf("This is the string being tested: '%s'\n", test);
 	
 	/* inits */
 	init_global_struct(envp);
@@ -44,7 +44,7 @@ int main(int argc, char *argv[], char *envp[])
 	if (!lexer)
 		return (EXIT_FAILURE);
 
-	lexer_function(test, lexer);
+	lexer_function(test1, lexer);
 
 	par = init_paser(lexer);
 	root_tree = parser_function(par, 0);

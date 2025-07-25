@@ -7,6 +7,100 @@ t_global *global_struct(void)
 	return (&global);
 }
 
+/* Start Init functions */
+
+void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
+{
+	aux->i = 0;
+	aux->j = 0;
+	aux->len_input = ft_strlen(input);
+	lexer->first_token = init_token(lexer->first_token, aux->len_input);
+	lexer->count_token++;
+	aux->curr_token = lexer->first_token;
+	aux->status = DEF;
+}
+
+t_token	*init_token(t_token *token, int len_input)
+{
+	token = malloc(sizeof(t_token));
+	token->content = ft_calloc(len_input, sizeof(char));
+	token->next = NULL;
+	token->type = 0;
+	return (token);
+}
+
+/* End Init functions */
+
+/* Start Aux functions */
+
+t_token	*get_last_token(t_lexer *lexer)
+{
+	t_token	*last_token;
+
+	if (!lexer)
+		return (NULL);
+	if (lexer->first_token == NULL)
+		return (lexer->first_token);
+	last_token = lexer->first_token;
+	while (last_token->next != NULL)
+		last_token = last_token->next;
+	return (last_token);
+}
+
+t_token	*get_previous_token(t_token *first_token, t_token *curr_token)
+{
+	t_token	*previous_token;
+
+	if (!first_token)
+		return (NULL);
+	previous_token = first_token;
+	while (previous_token->next != curr_token && previous_token->next != NULL)
+		previous_token = previous_token->next;
+	return (previous_token);
+}
+
+t_token	*add_token_back(t_lexer *lexer, int len_input)
+{
+	t_token	*last_token;
+	t_token	*temp_token;
+
+	if (lexer->first_token == NULL)
+	{
+		lexer->first_token = init_token(lexer->first_token, len_input);
+		lexer->count_token++;
+		return (lexer->first_token);
+	}
+	else
+	{
+		temp_token = get_last_token(lexer);
+		last_token = init_token(lexer->first_token, len_input);
+		temp_token->next = last_token;
+		lexer->count_token++;
+		return (last_token);
+	}
+}
+
+char	*find_ev(char *to_expand)
+{
+	t_global 	*global;
+	int			i;
+	char		*result;
+
+	global = global_struct();
+	i = -1;
+	while (global->ev[++i])
+	{
+		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0
+				&& (global->ev[i][ft_strlen(to_expand)]) == '=')
+		{
+			result = ft_substr(global->ev[i], ft_strlen(to_expand) + 1,
+						ft_strlen(global->ev[i]));
+			return (result);
+		}
+	}
+	return (ft_strdup(""));
+}
+
 int	check_matching_quotes(char *input)
 {
 	int		i;
@@ -39,60 +133,45 @@ int	check_matching_quotes(char *input)
 	return (0);
 }
 
-t_token	*get_last_token(t_lexer *lexer)
+int	check_only_terminal(char *input)
 {
-	t_token	*last_token;
+	int	i;
 
+	i = 0;
+	while (input[i])
+	{
+		if (input[i] != ' ' && input[i] != '\t' && input[i] != '\n')
+			return (0);
+		i++;
+	}
+	if (i == 0 && input[0] == 0)
+		return (1);
+	return (1);
+}
+
+/* End Aux functions */
+
+/* Start of lexer functions */
+
+int	lexer_function(char *input, t_lexer *lexer)
+{
+	t_token_aux	aux;
+
+	if (check_only_terminal(input) == 1)
+	{
+		lexer->first_token = NULL;
+		lexer->count_token = 0;
+		return (0);
+	}
+	if (check_matching_quotes(input))
+		return (1);
 	if (!lexer)
-		return (NULL);
-	if (lexer->first_token == NULL)
-		return (lexer->first_token);
-	last_token = lexer->first_token;
-	while (last_token->next != NULL)
-		last_token = last_token->next;
-	return (last_token);
-}
-
-t_token	*get_previous_token(t_token *first_token, t_token *curr_token)
-{
-	t_token	*previous_token;
-
-	if (!first_token)
-		return (NULL);
-	previous_token = first_token;
-	while (previous_token->next != curr_token && previous_token->next != NULL)
-		previous_token = previous_token->next;
-	return (previous_token);
-}
-
-t_token	*init_token(t_token *token, int len_input)
-{
-	token = malloc(sizeof(t_token));
-	token->content = ft_calloc(len_input, sizeof(char));
-	token->next = NULL;
-	token->type = 0;
-	return (token);
-}
-
-t_token	*add_token_back(t_lexer *lexer, int len_input)
-{
-	t_token	*last_token;
-	t_token	*temp_token;
-
-	if (lexer->first_token == NULL)
-	{
-		lexer->first_token = init_token(lexer->first_token, len_input);
-		lexer->count_token++;
-		return (lexer->first_token);
-	}
-	else
-	{
-		temp_token = get_last_token(lexer);
-		last_token = init_token(lexer->first_token, len_input);
-		temp_token->next = last_token;
-		lexer->count_token++;
-		return (last_token);
-	}
+		return (1);
+	init_lexer_aux(input, &aux, lexer);
+	process_char(input, &aux, lexer);
+	clean_last_tokens(&aux, lexer);
+	token_expansion(&aux, lexer);
+	return (0);
 }
 
 void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
@@ -264,33 +343,6 @@ void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer)
 	}
 }
 
-int	check_only_terminal(char *input)
-{
-	int	i;
-
-	i = 0;
-	while (input[i])
-	{
-		if (input[i] != ' ' && input[i] != '\t' && input[i] != '\n')
-			return (0);
-		i++;
-	}
-	if (i == 0 && input[0] == 0)
-		return (1);
-	return (1);
-}
-
-void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
-{
-	aux->i = 0;
-	aux->j = 0;
-	aux->len_input = ft_strlen(input);
-	lexer->first_token = init_token(lexer->first_token, aux->len_input);
-	lexer->count_token++;
-	aux->curr_token = lexer->first_token;
-	aux->status = DEF;
-}
-
 void	process_char(char *input, t_token_aux *aux, t_lexer *lexer)
 {
 	while (input[aux->i])
@@ -318,26 +370,9 @@ void	clean_last_tokens(t_token_aux *aux, t_lexer *lexer)
 	}
 }
 
-char	*find_ev(char *to_expand)
-{
-	t_global 	*global;
-	int			i;
-	char		*result;
+/* End of lexer functions */
 
-	global = global_struct();
-	i = -1;
-	while (global->ev[++i])
-	{
-		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0
-				&& (global->ev[i][ft_strlen(to_expand)]) == '=')
-		{
-			result = ft_substr(global->ev[i], ft_strlen(to_expand) + 1,
-						ft_strlen(global->ev[i]));
-			return (result);
-		}
-	}
-	return (ft_strdup(""));
-}
+/* Start expansion functions */
 
 void	insert_expansion(t_token *token, int sta, int len, char *mid_str)
 {
@@ -431,23 +466,4 @@ void	token_expansion(t_token_aux *aux, t_lexer *lexer)
 	}
 }
 
-int	lexer_function(char *input, t_lexer *lexer)
-{
-	t_token_aux	aux;
-
-	if (check_only_terminal(input) == 1)
-	{
-		lexer->first_token = NULL;
-		lexer->count_token = 0;
-		return (0);
-	}
-	if (check_matching_quotes(input))
-		return (1);
-	if (!lexer)
-		return (1);
-	init_lexer_aux(input, &aux, lexer);
-	process_char(input, &aux, lexer);
-	clean_last_tokens(&aux, lexer);
-	token_expansion(&aux, lexer);
-	return (0);
-}
+/* End expansion functions */

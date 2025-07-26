@@ -14,6 +14,7 @@
 #define RIGHT 1
 #define READ 0
 #define WRITE 1
+#define	NO_BUILTIN 69420
 
 typedef	struct s_ast
 {
@@ -181,11 +182,19 @@ void	execve_checker(char *f_path, char **comms, char **paths, t_px *px);
 int executor_function(t_ast *root_tree);
 void	error_handler(char *msg, char *file_name, int error_code, t_px *px);
 void	malloc_error_handler(void *ptr, int error_code);
+void	free_struct_to_free(void);
 
 /* terminal.c */
 void	terminal();
 
 /* builtin.c */
-void	pwd(void);
+int		pwd_builtin(void);
+int		builtin_execution(t_ast *node);
+void	builtin_functions(t_ast *node, char **comms, t_px *px);
+int		echo_builtin(t_ast *node);
+int	cd_builtin(t_ast *node);
+
+/* env.c */
+void	add_env(char *to_add);
 
 #endif

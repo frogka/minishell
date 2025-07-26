@@ -19,7 +19,8 @@ SRC_FILES = lexer.c \
 			aux.c \
 			executor.c \
 			terminal.c \
-			builtin.c
+			builtin.c \
+			env.c
 
 # Object Files
 OBJS_FILES = $(SRC_FILES:.c=.o)

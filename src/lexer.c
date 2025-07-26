@@ -1,5 +1,8 @@
 #include "../includes/minishell.h"
 
+/* TODO:
+===> Handle the errors comming from unclosed quotes */
+
 t_global *global_struct(void)
 {
 	static t_global	global;

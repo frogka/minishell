@@ -262,16 +262,6 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 	return (0);
 }
 
-void	free_struct_to_free()
-{
-	t_to_free	*to_free;
-
-	to_free = to_free_struct();
-	free_lexer(to_free->lexer);
-	free_ast(to_free->root_tree);
-	free_parser_struct(to_free->par);
-}
-
 void	exec_command(t_px *px, t_ast *cmd_node)
 {
 	int		j;
@@ -279,10 +269,11 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	char	*final_path;
 	char	**commands;
 
+	commands = commands_extractor(cmd_node);
+	builtin_functions(cmd_node, commands, px);
 	paths = path_extractor();
 	if (paths == NULL)
 		error_handler("Error: problem envp file path", NULL, 1, NULL);
-	commands = commands_extractor(cmd_node);
 	j = 0;
 	while (paths[j])
 	{
@@ -298,7 +289,6 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	free_arrays(paths);
 	free_px(px);
 	free_struct_to_free();
-	free_global_struct();
 	error_handler("command not found", NULL, 127, NULL);
 }
 
@@ -489,6 +479,16 @@ void	free_px(t_px *px)
 	if (px->pids != NULL)
 		free(px->pids);
 	free(px);
+}
+
+void	free_struct_to_free(void)
+{
+	t_to_free	*to_free;
+
+	to_free = to_free_struct();
+	free_lexer(to_free->lexer);
+	free_ast(to_free->root_tree);
+	free_parser_struct(to_free->par);
 }
 
 /* END of Executor AUX functions*/

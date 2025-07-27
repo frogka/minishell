@@ -1,36 +1,55 @@
 #include "../includes/minishell.h"
 
-void	builtin_functions(t_ast *node, char **comms, t_px *px)
+int	builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit)
 {
 	int	exit_code;
 
 	exit_code = builtin_execution(node);
 	if (exit_code == NO_BUILTIN)
-		return ;
-	else
+		return (0);
+	else if(to_exit == TO_EXIT)
 	{
 		free_arrays(comms);
 		free_px(px);
 		free_struct_to_free();
+		exit(exit_code);
+	}		
+	else
+	{
+		free_px(px);
+		return (exit_code);
 	}
-	exit(exit_code);
 }
 
-int	builtin_execution(t_ast *node)
+int	is_builtin(t_ast *n)
 {
-	if (ft_strncmp("echo", node->content, 4) == 0 && ft_strlen(node->content) == 4)
-		return (echo_builtin(node->left));
-	else if (ft_strncmp("cd", node->content, 2) == 0 && ft_strlen(node->content) == 2)
-		return (cd_builtin(node->left));
-	else if (ft_strncmp("pwd", node->content, 3) == 0 && ft_strlen(node->content) == 3)
+	if ((ft_strncmp("echo", n->data, 4) == 0 && ft_strlen(n->data) == 4)
+		|| (ft_strncmp("cd", n->data, 2) == 0 && ft_strlen(n->data) == 2)
+		|| (ft_strncmp("pwd", n->data, 3) == 0 && ft_strlen(n->data) == 3)
+		|| (ft_strncmp("export", n->data, 6) == 0 && ft_strlen(n->data) == 6)
+		|| (ft_strncmp("unset", n->data, 5) == 0 && ft_strlen(n->data) == 5)
+		|| (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
+		|| (ft_strncmp("exit", n->data, 4) == 0 && ft_strlen(n->data) == 4))
+		return (1);
+	else
+		return(0);
+}
+
+int	builtin_execution(t_ast *n)
+{
+	if (ft_strncmp("echo", n->data, 4) == 0 && ft_strlen(n->data) == 4)
+		return (echo_builtin(n->left));
+	else if (ft_strncmp("cd", n->data, 2) == 0 && ft_strlen(n->data) == 2)
+		return (cd_builtin(n->left));
+	else if (ft_strncmp("pwd", n->data, 3) == 0 && ft_strlen(n->data) == 3)
 		return (pwd_builtin());
-	// else if (ft_strncmp("export", node->content, 6) == 0 && ft_strlen(node->content) == 6)
+	// else if (ft_strncmp("export", n->data, 6) == 0 && ft_strlen(n->data) == 6)
 	// 	return (export_builtin());
-	// else if (ft_strncmp("unset", node->content, 5) == 0 && ft_strlen(node->content) == 5)
+	// else if (ft_strncmp("unset", n->data, 5) == 0 && ft_strlen(n->data) == 5)
 	// 	return (unset_builtin());
-	// else if (ft_strncmp("env", node->content, 3) == 0 && ft_strlen(node->content) == 3)
+	// else if (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
 	// 	return (env_builtin());
-	// else if (ft_strncmp("exit", node->content, 4) == 0 && ft_strlen(node->content) == 4)
+	// else if (ft_strncmp("exit", n->data, 4) == 0 && ft_strlen(n->data) == 4)
 	// 	return (exit_builtin());
 	else
 		return(NO_BUILTIN);
@@ -40,15 +59,6 @@ int	pwd_builtin(void)
 {
 	size_t		size;
 	char	buffer[1024];
-
-	int i = -1;
-	t_global *global = global_struct();
-	while (global->ev[++i])
-	{
-		printf("%s\n", global->ev[i]);
-	}
-	
-	exit (EXIT_SUCCESS);
 
 	size = 1024;
 	getcwd(buffer, size);
@@ -63,7 +73,7 @@ int	echo_builtin(t_ast *node)
 	int		option;
 
 	option = 0;
-	if (ft_strncmp(node->content, "-n", 2) == 0 && ft_strlen(node->content) == 2)
+	if (ft_strncmp(node->data, "-n", 2) == 0 && ft_strlen(node->data) == 2)
 	{
 		node = node->left;
 		option = 1;
@@ -78,9 +88,9 @@ int	echo_builtin(t_ast *node)
 	while (initial_node)
 	{
 		if (count > 1)
-			printf("%s ", initial_node->content);
+			printf("%s ", initial_node->data);
 		else
-			printf("%s", initial_node->content);
+			printf("%s", initial_node->data);
 		initial_node = initial_node->left;
 		count--;
 	}
@@ -127,11 +137,9 @@ int	cd_builtin(t_ast *node)
 		count++;
 		node = node->left;
 	}
-	printf("Count: %i\n", count);
 	if (count == 0)
 	{
 		home = find_ev("HOME");
-		printf("%s\n", home);
 		if (home[0] == 0)
 		{
 			free(home);
@@ -139,7 +147,6 @@ int	cd_builtin(t_ast *node)
 		}
 		else
 		{
-			printf("Enters in the else of count == 0\n");
 			if (chdir(home) == -1)
 			{
 				free(home);
@@ -147,37 +154,24 @@ int	cd_builtin(t_ast *node)
 			}
 			else
 			{
-				printf("Enters in the second else\n");
-				printf("buffer: %s\n",buffer);
-				printf("home: %s\n", home);
 				update_env("OLDPWD=", buffer, NULL);
 				update_env("PWD=",home, home);
-				printf("OLDPWD: %s\n", find_ev("OLDPWD"));
-				printf("PWD: %s\n", find_ev("PWD"));
-				
-				int i = -1;
-				t_global *global = global_struct();
-				while (global->ev[++i])
-				{
-					printf("%s\n", global->ev[i]);
-				}
-				
-				exit (EXIT_SUCCESS);
+				return (EXIT_SUCCESS);
 			}
 		}
 	}
 	else if (count == 1)
 	{
-		if (chdir(initial_node->content) == -1)
+		if (chdir(initial_node->data) == -1)
 			error_handler("cd: Path given is not valid", NULL, EXIT_FAILURE, NULL);
 		else
 		{
 			update_env("OLDPWD=", buffer, NULL);
-			update_env("PWD=", initial_node->content, NULL);
-			exit (EXIT_SUCCESS);
+			update_env("PWD=", initial_node->data, NULL);
+			return (EXIT_SUCCESS);
 		}
 	}
 	else
 		error_handler("cd: Too many arguments", NULL, EXIT_FAILURE, NULL);
-	exit(EXIT_FAILURE);
+	return (EXIT_FAILURE);
 }

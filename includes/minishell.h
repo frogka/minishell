@@ -15,11 +15,13 @@
 #define READ 0
 #define WRITE 1
 #define	NO_BUILTIN 69420
+#define TO_RETURN 0
+#define TO_EXIT 1
 
 typedef	struct s_ast
 {
 	int				type;
-	char 			*content;
+	char 			*data;
 	struct s_ast	*left;
 	struct s_ast	*right;
 }	t_ast;
@@ -74,7 +76,7 @@ enum e_token_type
 typedef struct s_token
 {
 	int				type; // substitute by an enum afterwards
-	char 			*content;
+	char 			*data;
 	struct s_token	*next;
 }	t_token;
 
@@ -190,7 +192,8 @@ void	terminal();
 /* builtin.c */
 int		pwd_builtin(void);
 int		builtin_execution(t_ast *node);
-void	builtin_functions(t_ast *node, char **comms, t_px *px);
+int		builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit);
+int		is_builtin(t_ast *n);
 int		echo_builtin(t_ast *node);
 int	cd_builtin(t_ast *node);
 

@@ -1,8 +1,10 @@
 #include "../includes/minishell.h"
 
 /* TODOS
-===> Add error handling functions
+SHOULD BE DONE ===> Add error handling functions
 ===> When doing $USER, there is a double free problem
+===> Change the executor function to handle && and ||. This should mean that we need to divide the parts
+	 of the tree that 
 */
 
 /* Start of Redirections */
@@ -107,7 +109,7 @@ void	redirections_setup(t_ast *root, t_px *px)
 	{
 		if (is_redirect_token(root->type))
 		{
-			fd = open_fd(root->right->content, root->type, px);
+			fd = open_fd(root->right->data, root->type, px);
 			redirections_files_setup(fd, root->type, num_output_fd);
 		}
 		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)
@@ -218,6 +220,7 @@ t_px	*initialize_px(t_ast *root_tree)
 
 /* Start of Executor functions */
 
+/* executes a subtree */
 void	executor_aux(t_px *px, t_ast *root)
 {
 	if (root == NULL)
@@ -254,12 +257,18 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 			}
 		}
 		redirections_setup(cmd_node, px);
-		if (cmd_node->content == NULL || cmd_node->content[0] == 0)
+		if (cmd_node->data == NULL || cmd_node->data[0] == 0)
 			error_handler("No command ''", NULL, 1, px);
 		if (is_default_token(cmd_node->type))
 			exec_command(px, cmd_node);
 	}
 	return (0);
+}
+
+/* Executes a subtree that is only composed out of a builtin function. */
+int	executor_builtin_func(t_ast *node, t_px *px)
+{
+	return (builtin_functions(node, NULL, px, TO_RETURN));
 }
 
 void	exec_command(t_px *px, t_ast *cmd_node)
@@ -270,7 +279,7 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	char	**commands;
 
 	commands = commands_extractor(cmd_node);
-	builtin_functions(cmd_node, commands, px);
+	builtin_functions(cmd_node, commands, px, TO_EXIT);
 	paths = path_extractor();
 	if (paths == NULL)
 		error_handler("Error: problem envp file path", NULL, 1, NULL);
@@ -322,6 +331,8 @@ int executor_function(t_ast *root_tree)
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
+	if (px->num_pipes == 0 && is_builtin(root_tree))
+		return (executor_builtin_func(root_tree, px));
 	executor_aux(px, px->root_tree);
 	j = -1;
 	while (++j < px->num_pipes)
@@ -383,7 +394,7 @@ char	**commands_extractor(t_ast *cmd_node)
 	int		count;
 	char	**commands;
 
-	if (cmd_node == NULL || cmd_node->content == NULL
+	if (cmd_node == NULL || cmd_node->data == NULL
 			|| cmd_node->type != CHAR_DEF)
 		return (NULL);	
 	temp = cmd_node;
@@ -398,7 +409,7 @@ char	**commands_extractor(t_ast *cmd_node)
 	count = 0;
 	while (temp)
 	{
-		commands[count] = ft_strdup(temp->content);
+		commands[count] = ft_strdup(temp->data);
 		temp = temp->left;
 		count++;
 	}

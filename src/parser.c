@@ -9,7 +9,7 @@ void	print_ast_node(t_ast *node)
 	printf("===============\n");
 	printf("Node address: %p\n", node);
 	printf("Node type: %i\n", node->type);
-	printf("Node content: %s\n", node->content);
+	printf("Node content: %s\n", node->data);
 	printf("left node: %p\n", node->left);
 	printf("right node: %p\n", node->right);
 	printf("===============\n\n");
@@ -37,12 +37,12 @@ void	print_node_leafs(t_ast *node)
 	r_node = node->right;
 	while (l_node != NULL)
 	{
-		printf("This is a left node: %s\n", l_node->content);
+		printf("This is a left node: %s\n", l_node->data);
 		l_node = l_node->left;
 	}
 	while (r_node != NULL)
 	{
-		printf("This is a left node: %s\n", r_node->content);
+		printf("This is a left node: %s\n", r_node->data);
 		r_node = r_node->left;
 	}
 }
@@ -54,13 +54,13 @@ void	ast_to_sexpr(t_ast *node)
 
 	if (!node->left && !node->right)
 	{
-		if (node->content)
-			printf("%s", node->content);
+		if (node->data)
+			printf("%s", node->data);
 		return;
 	}
 	printf("(");
-	if (node->content)
-		printf("%s", node->content);
+	if (node->data)
+		printf("%s", node->data);
 	if (node->left)
 	{
 		printf(" ");
@@ -81,7 +81,7 @@ t_ast	*create_ast_node(int type, char *content)
 	node = malloc(sizeof(t_ast));
 	if (!node)
 		return (NULL);
-	node->content = ft_strdup(content);
+	node->data = ft_strdup(content);
 	node->type = type;
 	node->left = NULL;
 	node->right = NULL;
@@ -92,7 +92,7 @@ t_ast	*create_ast_structure(t_token *token, t_ast *l_node, t_ast *r_node)
 {
 	t_ast	*node;
 	
-	node = create_ast_node(token->type, token->content);
+	node = create_ast_node(token->type, token->data);
 	node->left = l_node;
 	node->right = r_node;
 	return (node);
@@ -144,13 +144,13 @@ void	ast_node_addback(t_ast *l_node, t_token *token)
 
 	if (l_node->left == NULL)
 	{
-		l_node->left = create_ast_node(token->type, token->content);
+		l_node->left = create_ast_node(token->type, token->data);
 		return ;
 	}
 	first_l_node = l_node->left;
 	while (l_node->left != NULL)
 		l_node = l_node->left;
-	l_node->left = create_ast_node(token->type, token->content);
+	l_node->left = create_ast_node(token->type, token->data);
 	l_node = first_l_node;
 }
 
@@ -201,7 +201,7 @@ void	free_ast(t_ast *root)
 	{
 		free_ast(root->left);
 		free_ast(root->right);
-		free(root->content);
+		free(root->data);
 		free(root);
 	}
 }
@@ -287,7 +287,7 @@ t_ast	*parse_simple_command(t_parser *par)
 				printf("Error: syntax error near unexpecter token `newline'");
 				return (NULL);
 			}
-			file = create_ast_node(CHAR_DEF, par->curr_token->content);
+			file = create_ast_node(CHAR_DEF, par->curr_token->data);
 			redi = create_ast_structure(token_redirect, NULL, file);
 			ast_node_placeback(&redi_root, redi, RIGHT);
 			par->curr_token = par->curr_token->next;
@@ -295,7 +295,7 @@ t_ast	*parse_simple_command(t_parser *par)
 		else if(is_default_token(par->curr_token->type))
 		{
 			if (cmd == NULL)
-				cmd = create_ast_node(CHAR_DEF, par->curr_token->content);
+				cmd = create_ast_node(CHAR_DEF, par->curr_token->data);
 			else
 				ast_node_addback(cmd, par->curr_token);
 			par->curr_token = par->curr_token->next;

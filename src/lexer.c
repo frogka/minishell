@@ -33,7 +33,7 @@ void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
 t_token	*init_token(t_token *token, int len_input)
 {
 	token = malloc(sizeof(t_token));
-	token->content = ft_calloc(len_input + 1, sizeof(char));
+	token->data = ft_calloc(len_input + 1, sizeof(char));
 	token->next = NULL;
 	token->type = 0;
 	return (token);
@@ -191,11 +191,11 @@ void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	{
 		if (aux->j != 0)
 		{
-			aux->curr_token->content[aux->j] = 0;
+			aux->curr_token->data[aux->j] = 0;
 			aux->j = 0;
 			aux->curr_token = add_token_back(lexer, aux->len_input);
 		}
-		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->curr_token->type = input[aux->i];
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 		(*f)++;
@@ -208,11 +208,11 @@ void	handle_quote_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	{
 		if (aux->j != 0)
 		{
-			aux->curr_token->content[aux->j] = 0;
+			aux->curr_token->data[aux->j] = 0;
 			aux->j = 0;
 			aux->curr_token = add_token_back(lexer, aux->len_input);
 		}
-		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->curr_token->type = input[aux->i];
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 		(*f) = 1; 
@@ -245,12 +245,12 @@ void	handle_def_2char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	{
 		if (aux->j != 0)
 		{
-			aux->curr_token->content[aux->j] = 0;
+			aux->curr_token->data[aux->j] = 0;
 			aux->j = 0;
 			aux->curr_token = add_token_back(lexer, aux->len_input);
 		}
-		aux->curr_token->content[aux->j] = input[(aux->i)++];
-		aux->curr_token->content[aux->j + 1] = input[aux->i];
+		aux->curr_token->data[aux->j] = input[(aux->i)++];
+		aux->curr_token->data[aux->j + 1] = input[aux->i];
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 	}
 }
@@ -263,7 +263,7 @@ void	handle_terminal(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	{
 		if (aux->j != 0)
 		{
-			aux->curr_token->content[aux->j] = 0;
+			aux->curr_token->data[aux->j] = 0;
 			aux->j = 0;
 			aux->curr_token = add_token_back(lexer, aux->len_input);
 		}
@@ -278,7 +278,7 @@ void	handle_start_quote(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	{
 		if (aux->j != 0)
 		{
-			aux->curr_token->content[aux->j] = 0;
+			aux->curr_token->data[aux->j] = 0;
 			aux->j = 0;
 			aux->curr_token = add_token_back(lexer, aux->len_input);
 		}
@@ -298,7 +298,7 @@ void	process_char_def(char *input, t_token_aux *aux, t_lexer *lexer)
 	handle_start_quote(input, aux, lexer, &flag);
 	if (flag == 0)
 	{
-		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->curr_token->type = CHAR_DEF;
 		aux->j++;
 	}
@@ -308,19 +308,19 @@ void	process_char_quote(char *input, t_token_aux *aux, t_lexer *lexer)
 {
 	if (input[aux->i] == '\\' && input[aux->i + 1] == aux->status)
 	{
-		aux->curr_token->content[(aux->j)++] = input[aux->i + 1];
+		aux->curr_token->data[(aux->j)++] = input[aux->i + 1];
 		aux->i += 2;
 	}
 	if (input[aux->i] == aux->status)
 	{
-		aux->curr_token->content[aux->j] = 0;
+		aux->curr_token->data[aux->j] = 0;
 		aux->j = 0;
 		aux->status = DEF;
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 	}
 	else
 	{
-		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->curr_token->type = aux->status;
 		aux->j++;
 	}
@@ -333,12 +333,12 @@ void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer)
 	f = 0;
 	if (input[aux->i] == '\\' && input[aux->i + 1] == CHAR_DQUOTE)
 	{
-		aux->curr_token->content[(aux->j)++] = input[aux->i + 1];
+		aux->curr_token->data[(aux->j)++] = input[aux->i + 1];
 		aux->i += 2;
 	}
 	if (input[aux->i] == aux->status)
 	{
-		aux->curr_token->content[aux->j] = 0;
+		aux->curr_token->data[aux->j] = 0;
 		aux->j = 0;
 		aux->status = DEF;
 		aux->curr_token = add_token_back(lexer, aux->len_input);
@@ -347,7 +347,7 @@ void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer)
 	handle_quote_1char(input, aux, lexer, &f);
 	if (f == 0)
 	{
-		aux->curr_token->content[aux->j] = input[aux->i];
+		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->curr_token->type = aux->status;
 		aux->j++;
 	}
@@ -369,10 +369,10 @@ void	clean_last_tokens(t_token_aux *aux, t_lexer *lexer)
 {
 	t_token		*temp;
 
-	if (aux->curr_token->content[0] == 0 && aux->curr_token->type == 0)
+	if (aux->curr_token->data[0] == 0 && aux->curr_token->type == 0)
 	{
 		temp = aux->curr_token;
-		free(temp->content);
+		free(temp->data);
 		free(temp);
 		aux->curr_token = get_previous_token(lexer->first_token, aux->curr_token);
 		aux->curr_token->next = NULL;
@@ -394,9 +394,9 @@ void	insert_expansion(t_token *token, int sta, int len, char *mid_str)
 	int		i;
 	int		j;
 
-	len_str = ft_strlen(token->content);
-	start_str = ft_substr(token->content, 0, sta);
-	end_str = ft_substr(token->content, sta + len, len_str - (sta + len));
+	len_str = ft_strlen(token->data);
+	start_str = ft_substr(token->data, 0, sta);
+	end_str = ft_substr(token->data, sta + len, len_str - (sta + len));
 
 	len_final = 0;
 	len_final += ft_strlen(start_str);
@@ -419,8 +419,8 @@ void	insert_expansion(t_token *token, int sta, int len, char *mid_str)
 	free(start_str);
 	free(mid_str);
 	free(end_str);
-	free(token->content);
-	token->content = final_str;
+	free(token->data);
+	token->data = final_str;
 }
 
 void	token_expansion_aux(t_token *token)
@@ -435,27 +435,27 @@ void	token_expansion_aux(t_token *token)
 	i = 0;
 	j = 0;
 	global = global_struct();
-	while (token->content[i])
+	while (token->data[i])
 	{
 		j = 0;
-		if (token->content[i] == CHAR_DOLLAR 
-				&& token->content[i + 1] != 0
-				&& token->content[i + 1] == '?')
+		if (token->data[i] == CHAR_DOLLAR 
+				&& token->data[i + 1] != 0
+				&& token->data[i + 1] == '?')
 		{
 			temp = ft_itoa(global->exit_code);
 			len = ft_strlen(temp);
 			insert_expansion(token, i, len + 1, temp);
 		}
-		else if (token->content[i] == CHAR_DOLLAR 
-				&& token->content[i + 1] != 0
-				&& token->content[i + 1] != ' ')
+		else if (token->data[i] == CHAR_DOLLAR 
+				&& token->data[i + 1] != 0
+				&& token->data[i + 1] != ' ')
 		{
-			while (token->content[i + 1 + j] != 0
-					&& token->content[i + 1 + j] != ' ')
+			while (token->data[i + 1 + j] != 0
+					&& token->data[i + 1 + j] != ' ')
 			{
 				j++;
 			}
-			temp = ft_substr(token->content, i + 1, j);
+			temp = ft_substr(token->data, i + 1, j);
 			to_expand = find_ev(temp);
 			free(temp);
 			insert_expansion(token, i, j + 1, to_expand);

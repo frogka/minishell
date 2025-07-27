@@ -32,11 +32,9 @@ int	run_command(char *line)
 
 void	terminal()
 {
-	// t_global	*global;
 	char		*prompt;
 	char		*line;
 
-	// global = global_struct();
 	prompt = ft_strdup("\033[35m$minishell> \033[0m");
 	while (1)
 	{
@@ -46,6 +44,8 @@ void	terminal()
 			free(line);
 			free(prompt);
 			rl_clear_history();
+			printf("goes through this exit\n");
+			free_global_struct();
 			break;
 		}
 		else if (ft_strlen(line) <= 0 && check_only_terminal(line))

@@ -34,6 +34,5 @@ int main(int argc, char *argv[], char *envp[])
 	}
 	init_global_struct(envp);
 	terminal();
-	free_global_struct();
 	return (0);
 }

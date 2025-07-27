@@ -37,6 +37,8 @@ void	free_global_struct(void)
 	int			i;
 
 	global = global_struct();
+	if (global->ev == NULL)
+		return;	
 	i = -1;
 	while (global->ev[++i])
 		free(global->ev[i]);

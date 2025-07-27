@@ -195,9 +195,12 @@ int		builtin_execution(t_ast *node);
 int		builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit);
 int		is_builtin(t_ast *n);
 int		echo_builtin(t_ast *node);
-int	cd_builtin(t_ast *node);
+int		cd_builtin(t_ast *node);
+int		exit_builtin(void);
+
 
 /* env.c */
 void	add_env(char *to_add);
+void	update_env(char *env_to_change, char *new_env, char *to_free);
 
 #endif

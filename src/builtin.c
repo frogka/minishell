@@ -49,8 +49,8 @@ int	builtin_execution(t_ast *n)
 	// 	return (unset_builtin());
 	// else if (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
 	// 	return (env_builtin());
-	// else if (ft_strncmp("exit", n->data, 4) == 0 && ft_strlen(n->data) == 4)
-	// 	return (exit_builtin());
+	else if (ft_strncmp("exit", n->data, 4) == 0 && ft_strlen(n->data) == 4)
+		return (exit_builtin());
 	else
 		return(NO_BUILTIN);
 }
@@ -73,6 +73,11 @@ int	echo_builtin(t_ast *node)
 	int		option;
 
 	option = 0;
+	if (node == NULL)
+	{
+		printf("\n");
+		return (EXIT_SUCCESS);
+	}	
 	if (ft_strncmp(node->data, "-n", 2) == 0 && ft_strlen(node->data) == 2)
 	{
 		node = node->left;
@@ -97,29 +102,6 @@ int	echo_builtin(t_ast *node)
 	if (option == 0)
 		printf("\n");
 	return (EXIT_SUCCESS);
-}
-
-/* Checks whether env_to_change exists. If yes, change it to new_env. If not, add it to the end.*/
-void	update_env(char *env_to_change, char *new_env, char *to_free)
-{
-	t_global	*global;
-	int			count;
-
-	count = -1;
-	global = global_struct();
-	while (global->ev[++count])
-	{
-		if (ft_strncmp(env_to_change, global->ev[count], ft_strlen(env_to_change)) == 0)
-			break;
-	}
-	if (global->ev[count])
-	{
-		free(global->ev[count]);
-		global->ev[count] = ft_strjoin(env_to_change, new_env);
-	}
-	else
-		add_env(new_env);
-	free(to_free);
 }
 
 int	cd_builtin(t_ast *node)
@@ -150,7 +132,7 @@ int	cd_builtin(t_ast *node)
 			if (chdir(home) == -1)
 			{
 				free(home);
-				error_handler("cd: Path given is not valid", NULL, EXIT_FAILURE, NULL);
+				error_handler("cd: Path is not valid", NULL, EXIT_FAILURE, NULL);
 			}
 			else
 			{
@@ -163,7 +145,7 @@ int	cd_builtin(t_ast *node)
 	else if (count == 1)
 	{
 		if (chdir(initial_node->data) == -1)
-			error_handler("cd: Path given is not valid", NULL, EXIT_FAILURE, NULL);
+			error_handler("cd: Path is not valid", NULL, EXIT_FAILURE, NULL);
 		else
 		{
 			update_env("OLDPWD=", buffer, NULL);
@@ -174,4 +156,31 @@ int	cd_builtin(t_ast *node)
 	else
 		error_handler("cd: Too many arguments", NULL, EXIT_FAILURE, NULL);
 	return (EXIT_FAILURE);
+}
+
+int	exit_builtin(void)
+{
+	exit(EXIT_SUCCESS);
+}
+
+void	print_export_builtin(void)
+{
+	t_global	*global;
+	int			i;
+
+	global = global_struct();
+	i = -1;
+	while (global->ev[++i])
+		printf("declare -x %s\n", global->ev[i]);
+}
+
+int	export_builtin(t_ast *node)
+{
+	if (node == NULL)
+		print_export_builtin();
+	while (node)
+	{
+		node = node->left;	
+	}
+	return (EXIT_SUCCESS);
 }

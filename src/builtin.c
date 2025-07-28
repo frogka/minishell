@@ -3,7 +3,9 @@
 int	builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit)
 {
 	int	exit_code;
+	t_prompt_line	*pl;
 
+	pl = to_prompt_line_struct();
 	exit_code = builtin_execution(node);
 	if (exit_code == NO_BUILTIN)
 		return (0);
@@ -12,6 +14,9 @@ int	builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit)
 		free_arrays(comms);
 		free_px(px);
 		free_struct_to_free();
+		free_global_struct();
+		rl_clear_history();
+		free(pl->prompt);
 		exit(exit_code);
 	}		
 	else
@@ -158,8 +163,19 @@ int	cd_builtin(t_ast *node)
 	return (EXIT_FAILURE);
 }
 
+t_prompt_line	*to_prompt_line_struct(void)
+{
+	static t_prompt_line	pl;
+
+	return (&pl);
+}
+
 int	exit_builtin(void)
 {
+	t_prompt_line	*pl;
+
+	pl = to_prompt_line_struct();
+	free(pl->prompt);
 	exit(EXIT_SUCCESS);
 }
 

@@ -15,7 +15,7 @@ int	run_command(char *line)
 		return (EXIT_FAILURE);
 
 	lexer_function(line, lexer);
-
+	free(line);
 	par = init_paser(lexer);
 	root_tree = parser_function(par, 0);
 	
@@ -32,29 +32,27 @@ int	run_command(char *line)
 
 void	terminal()
 {
-	char		*prompt;
-	char		*line;
+	t_prompt_line	*pl;
 
-	prompt = ft_strdup("\033[35m$minishell> \033[0m");
+	pl = to_prompt_line_struct();
+	pl->prompt = ft_strdup("\033[35m$minishell> \033[0m");
 	while (1)
 	{
-		line = readline(prompt);
-		if (ft_strlen(line) == 4 && ft_strncmp(line, "exit", 4) == 0)
+		pl->line = readline(pl->prompt);
+		if (ft_strlen(pl->line) == 4 && ft_strncmp(pl->line, "exit", 4) == 0)
 		{
-			free(line);
-			free(prompt);
 			rl_clear_history();
 			printf("goes through this exit\n");
 			free_global_struct();
-			break;
+			exit_builtin();
 		}
-		else if (ft_strlen(line) <= 0 && check_only_terminal(line))
+		else if (ft_strlen(pl->line) <= 0 && check_only_terminal(pl->line))
 		{
-			free(line);
+			free(pl->line);
 			continue;
 		}
 		else
-			add_history(line);
-		run_command(line);
+			add_history(pl->line);
+		run_command(pl->line);
 	}
 }

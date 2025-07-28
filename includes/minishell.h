@@ -110,6 +110,11 @@ typedef	struct s_to_free
 	t_lexer		*lexer;
 }	t_to_free;
 
+typedef	struct s_prompt_line
+{
+	char	*prompt;
+	char	*line;
+}	t_prompt_line;
 
 /* lexer.c */
 t_global *global_struct(void);
@@ -202,7 +207,7 @@ void	remove_env(char *env_to_remove);
 void	remove_env_aux(int count);
 int		unset_builtin(t_ast *node);
 int		env_builtin(t_ast *node);
-
+t_prompt_line	*to_prompt_line_struct(void);
 
 /* env.c */
 void	add_env(char *to_add);

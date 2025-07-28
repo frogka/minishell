@@ -9,21 +9,30 @@ void	update_env(char *env_to_change, char *new_env, char *to_free)
 
 	count = -1;
 	global = global_struct();
-	while (global->ev[++count])
-	{
-		if (ft_strncmp(env_to_change, global->ev[count], ft_strlen(env_to_change)) == 0)
-			break;
-	}
-	if (global->ev[count])
-	{
-		free(global->ev[count]);
-		global->ev[count] = ft_strjoin(env_to_change, new_env);
-	}
-	else
+	if(global->ev == NULL)
 	{
 		to_add = ft_strjoin(env_to_change, new_env);
 		add_env(to_add);
 		free(to_add);
+	}
+	else
+	{
+		while (global->ev[++count])
+		{
+			if (ft_strncmp(env_to_change, global->ev[count], ft_strlen(env_to_change)) == 0)
+				break;
+		}
+		if (global->ev[count])
+		{
+			free(global->ev[count]);
+			global->ev[count] = ft_strjoin(env_to_change, new_env);
+		}
+		else
+		{
+			to_add = ft_strjoin(env_to_change, new_env);
+			add_env(to_add);
+			free(to_add);
+		}
 	}
 	free(to_free);
 }

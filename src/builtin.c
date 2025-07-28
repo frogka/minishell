@@ -170,6 +170,8 @@ void	print_export_builtin(void)
 
 	global = global_struct();
 	i = -1;
+	if (global->ev == NULL)
+		return;
 	while (global->ev[++i])
 		printf("declare -x %s\n", global->ev[i]);
 }
@@ -198,3 +200,4 @@ int	export_builtin(t_ast *node)
 	}
 	return (EXIT_SUCCESS);
 }
+

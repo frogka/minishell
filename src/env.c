@@ -4,6 +4,7 @@
 void	update_env(char *env_to_change, char *new_env, char *to_free)
 {
 	t_global	*global;
+	char		*to_add;
 	int			count;
 
 	count = -1;
@@ -19,7 +20,11 @@ void	update_env(char *env_to_change, char *new_env, char *to_free)
 		global->ev[count] = ft_strjoin(env_to_change, new_env);
 	}
 	else
-		add_env(new_env);
+	{
+		to_add = ft_strjoin(env_to_change, new_env);
+		add_env(to_add);
+		free(to_add);
+	}
 	free(to_free);
 }
 
@@ -34,7 +39,7 @@ void	add_env(char *to_add)
 	if(global->ev == NULL)
 	{
 		global->ev = malloc(sizeof(char*) * (2));
-		global->ev[0] = to_add;
+		global->ev[0] = ft_strdup(to_add);
 		global->ev[1] = NULL;
 		return ;
 	}
@@ -47,7 +52,7 @@ void	add_env(char *to_add)
 		i = -1;
 		while (++i < count)
 			new_env[i] = global->ev[i];
-		new_env[count] = to_add;
+		new_env[count] = ft_strdup(to_add);
 		new_env[count + 1] = NULL;
 		free(global->ev);
 		global->ev = new_env;

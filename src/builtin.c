@@ -43,8 +43,8 @@ int	builtin_execution(t_ast *n)
 		return (cd_builtin(n->left));
 	else if (ft_strncmp("pwd", n->data, 3) == 0 && ft_strlen(n->data) == 3)
 		return (pwd_builtin());
-	// else if (ft_strncmp("export", n->data, 6) == 0 && ft_strlen(n->data) == 6)
-	// 	return (export_builtin());
+	else if (ft_strncmp("export", n->data, 6) == 0 && ft_strlen(n->data) == 6)
+		return (export_builtin(n->left));
 	// else if (ft_strncmp("unset", n->data, 5) == 0 && ft_strlen(n->data) == 5)
 	// 	return (unset_builtin());
 	// else if (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
@@ -176,11 +176,25 @@ void	print_export_builtin(void)
 
 int	export_builtin(t_ast *node)
 {
+	char	*es_pos;
+	char	*env_to_change;
+	char	*new_env;
+
 	if (node == NULL)
 		print_export_builtin();
 	while (node)
 	{
-		node = node->left;	
+		es_pos = ft_strchr(node->data, '='); 
+		if (es_pos != NULL)
+		{
+			env_to_change = ft_substr(node->data, 0, es_pos - node->data + 1);
+			new_env = ft_substr(node->data, es_pos - node->data + 1, ft_strlen(node->data) - (es_pos - node->data + 1));
+			update_env(env_to_change, new_env, env_to_change);
+			free(new_env);
+		}
+		else
+			update_env(node->data, "", NULL);
+		node = node->left;
 	}
 	return (EXIT_SUCCESS);
 }

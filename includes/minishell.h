@@ -197,6 +197,7 @@ int		is_builtin(t_ast *n);
 int		echo_builtin(t_ast *node);
 int		cd_builtin(t_ast *node);
 int		exit_builtin(void);
+int	export_builtin(t_ast *node);
 
 
 /* env.c */

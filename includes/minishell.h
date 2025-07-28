@@ -197,7 +197,10 @@ int		is_builtin(t_ast *n);
 int		echo_builtin(t_ast *node);
 int		cd_builtin(t_ast *node);
 int		exit_builtin(void);
-int	export_builtin(t_ast *node);
+int		export_builtin(t_ast *node);
+void	remove_env(char *env_to_remove);
+void	remove_env_aux(int count);
+int	unset_builtin(t_ast *node);
 
 
 /* env.c */

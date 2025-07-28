@@ -37,6 +37,56 @@ void	update_env(char *env_to_change, char *new_env, char *to_free)
 	free(to_free);
 }
 
+void	remove_env_aux(int count)
+{
+	t_global	*global;
+	char		**new_env;
+	int			i;
+	int			j;
+
+	global = global_struct();
+	i = -1;
+	while (global->ev[++i]);
+	if (i == 1)
+	{
+		free(global->ev[0]);
+		free(global->ev);
+		global->ev = NULL;
+		return ;
+	}
+	new_env = malloc(sizeof(char *) * i);
+	i = -1;
+	j = 0;
+	while (global->ev[++i])
+	{
+		if (i != count)
+			new_env[j++] = global->ev[i];
+		else
+			free(global->ev[i]);
+	}
+	new_env[i - 1] = NULL;
+	free(global->ev);
+	global->ev = new_env;
+}
+
+void	remove_env(char *env_to_remove)
+{
+	t_global	*global;
+	int			count;
+
+	count = -1;
+	global = global_struct();
+	if (global->ev == NULL)
+		return ;
+	while (global->ev[++count])
+	{
+		if (ft_strncmp(env_to_remove, global->ev[count], ft_strlen(env_to_remove)) == 0)
+			break;
+	}
+	if (global->ev[count])
+		remove_env_aux(count);
+}
+
 void	add_env(char *to_add)
 {
 	t_global	*global;

@@ -45,8 +45,8 @@ int	builtin_execution(t_ast *n)
 		return (pwd_builtin());
 	else if (ft_strncmp("export", n->data, 6) == 0 && ft_strlen(n->data) == 6)
 		return (export_builtin(n->left));
-	// else if (ft_strncmp("unset", n->data, 5) == 0 && ft_strlen(n->data) == 5)
-	// 	return (unset_builtin());
+	else if (ft_strncmp("unset", n->data, 5) == 0 && ft_strlen(n->data) == 5)
+		return (unset_builtin(n->left));
 	// else if (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
 	// 	return (env_builtin());
 	else if (ft_strncmp("exit", n->data, 4) == 0 && ft_strlen(n->data) == 4)
@@ -201,3 +201,15 @@ int	export_builtin(t_ast *node)
 	return (EXIT_SUCCESS);
 }
 
+int	unset_builtin(t_ast *node)
+{
+	if (node == NULL)
+		return (EXIT_SUCCESS);
+	while (node)
+	{
+		remove_env(node->data);
+		node = node->left;
+	}
+	return (EXIT_SUCCESS);
+	
+}

@@ -47,8 +47,8 @@ int	builtin_execution(t_ast *n)
 		return (export_builtin(n->left));
 	else if (ft_strncmp("unset", n->data, 5) == 0 && ft_strlen(n->data) == 5)
 		return (unset_builtin(n->left));
-	// else if (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
-	// 	return (env_builtin());
+	else if (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
+		return (env_builtin(n->left));
 	else if (ft_strncmp("exit", n->data, 4) == 0 && ft_strlen(n->data) == 4)
 		return (exit_builtin());
 	else
@@ -176,6 +176,19 @@ void	print_export_builtin(void)
 		printf("declare -x %s\n", global->ev[i]);
 }
 
+void	print_env_builtin(void)
+{
+	t_global	*global;
+	int			i;
+
+	global = global_struct();
+	i = -1;
+	if (global->ev == NULL)
+		return;
+	while (global->ev[++i])
+		printf("%s\n", global->ev[i]);
+}
+
 int	export_builtin(t_ast *node)
 {
 	char	*es_pos;
@@ -211,5 +224,18 @@ int	unset_builtin(t_ast *node)
 		node = node->left;
 	}
 	return (EXIT_SUCCESS);
-	
+}
+
+int	env_builtin(t_ast *node)
+{
+	if (node == NULL)
+	{
+		print_env_builtin();
+		return (EXIT_SUCCESS);
+	}
+	else
+	{
+		printf("env: no options or arguments allowed\n");
+		return (EXIT_FAILURE);
+	}
 }

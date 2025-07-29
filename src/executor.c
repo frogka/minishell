@@ -220,35 +220,46 @@ t_px	*initialize_px(t_ast *root_tree)
 /* Start of Executor functions */
 
 /* executes a subtree */
-void	executor_aux(t_px *px, t_ast *root)
+int	executor_aux(t_px *px, t_ast *root)
 {
+	int	exit_code;
+
+	printf("[%i] %s\n", root->type, root->data);
 	if (root == NULL)
-		return ;
+		return (EXIT_SUCCESS);
 	if (is_default_token(root->type))
 	{ 
-		executor(px, px->curr_index, root);
+		exit_code = executor(px, px->curr_index, root);
 		px->curr_index++;
+		return (exit_code);
 	}
-	else if (is_operator_token(root->type))
+	else if (root->type == CHAR_PIPE || root->type == CHAR_AMPERSAND
+			|| root->type == CHAR_DOLLAR || root->type == CHAR_QM)
 	{
 		executor_aux(px, root->left);
 		executor_aux(px, root->right);
 	}
-	// else if (root->type == CHAR_AND)
-	// {
-	// 	if (executor_aux(px, root->left) == 0)
-	// 		executor_aux(px, root->right);
-	// }
-	// else if(root->type == CHAR_OR)
-	// {
-		
-	// }
-	
+	else if (root->type == CHAR_AND)
+	{
+		exit_code = executor_aux(px, root->left);
+		if (exit_code != 0)
+			return (exit_code);	
+		return (executor_aux(px, root->right));
+	}
+	else if(root->type == CHAR_OR)
+	{
+		exit_code = executor_aux(px, root->left);
+		if (exit_code == 0)
+			return (exit_code);
+		return (executor_aux(px, root->right));
+	}
+	return (EXIT_SUCCESS);
 }
 
 int	executor(t_px *px, int i, t_ast *cmd_node)
 {
 	int	j;
+	int	status;
 
 	px->pids[i] = fork();
 	if (px->pids[i] == -1)
@@ -271,7 +282,10 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 		if (is_default_token(cmd_node->type))
 			exec_command(px, cmd_node);
 	}
-	return (0);
+	waitpid(px->pids[i], &status, 0);
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	return (EXIT_FAILURE);
 }
 
 /* Executes a subtree that is only composed out of a builtin function. */
@@ -370,8 +384,6 @@ int executor_function(t_ast *root_tree)
 		close(px->pipes[j][WRITE]);
 	}
 	num = -1;
-	while (++num < px->num_commands)
-		waitpid(px->pids[num], &status, 0);
 	if (px->num_commands == 0)
 		redirections_setup(px->root_tree, px);
 	num = px->num_commands;	

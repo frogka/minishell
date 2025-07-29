@@ -177,7 +177,7 @@ int	count_number_commands(t_ast *root_tree);
 int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);
 void	create_pipeline(t_px *px);
-void	executor_aux(t_px *px, t_ast *root);
+int	executor_aux(t_px *px, t_ast *root);
 void	child_pipe_setup(t_px *px, int i);
 int	executor(t_px *px, int i, t_ast *cmd_node);
 void	exec_command(t_px *px, t_ast *cmd_node);
@@ -192,7 +192,6 @@ void	error_handler(char *msg, char *file_name, int error_code, t_px *px);
 void	malloc_error_handler(void *ptr, int error_code);
 void	free_struct_to_free(void);
 int	executor_builtin_func(t_px *px);
-
 
 /* terminal.c */
 void	terminal();

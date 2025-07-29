@@ -33,13 +33,21 @@ int	run_command(char *line)
 void	terminal()
 {
 	t_prompt_line	*pl;
+	rl_catch_signals = 0; //desactive interception signaux par readline
 
 	pl = to_prompt_line_struct();
 	pl->prompt = ft_strdup("\033[35m$minishell> \033[0m");
 	while (1)
 	{
 		pl->line = readline(pl->prompt);
-		if (ft_strlen(pl->line) == 4 && ft_strncmp(pl->line, "exit", 4) == 0)
+		if (pl->line == NULL)
+		{
+		    write(1, "exit\n", 5);
+		    free_global_struct();   // ou ce que tu utilises pour nettoyer
+		    rl_clear_history();
+		    exit(0);
+		}
+		else if (ft_strlen(pl->line) == 4 && ft_strncmp(pl->line, "exit", 4) == 0)
 		{
 			rl_clear_history();
 			printf("goes through this exit\n");

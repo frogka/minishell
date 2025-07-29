@@ -213,4 +213,7 @@ t_prompt_line	*to_prompt_line_struct(void);
 void	add_env(char *to_add);
 void	update_env(char *env_to_change, char *new_env, char *to_free);
 
+void	handler(int sig);
+
+
 #endif

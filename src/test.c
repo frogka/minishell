@@ -1,0 +1,34 @@
+#include "../includes/minishell.h"
+#include <signal.h>
+#include <stdio.h>
+#include <strings.h>
+#include <unistd.h>
+
+void	handler(int sig)
+{
+	if (sig == SIGINT)
+	{
+		write(1, "\n", 1);
+    	rl_on_new_line();              // readline sait qu'on est sur une nouvelle ligne
+    	rl_replace_line("", 0);       // remplace la ligne courante par rien
+    	rl_redisplay();               // réaffiche le prompt proprement
+	}
+    //else if (sig == SIGQUIT)
+		//write(1, "\nSIGQUIT reçu\n", 14);
+}
+/*
+int	main(void)
+{
+	struct sigaction sa;
+
+	sa.sa_handler = handler;      // On associe notre fonction au signal
+	sigemptyset(&sa.sa_mask);     // On ne bloque aucun autre signal pendant le handler
+	sa.sa_flags = 0;              // Pas d'option spéciale
+
+	sigaction(SIGINT, &sa, NULL); // On applique ça au signal SIGINT
+    sigaction(SIGQUIT, &sa, NULL);
+
+	while (1)                     // Programme infini pour tester
+		pause();                 // Attend un signal
+}
+*/

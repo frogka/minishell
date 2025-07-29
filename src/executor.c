@@ -2,7 +2,6 @@
 
 /* TODOS
 SHOULD BE DONE ===> Add error handling functions
-===> When doing $USER, there is a double free problem
 ===> Change the executor function to handle && and ||. This should mean that we need to divide the parts
 	 of the tree that 
 */
@@ -235,6 +234,16 @@ void	executor_aux(t_px *px, t_ast *root)
 		executor_aux(px, root->left);
 		executor_aux(px, root->right);
 	}
+	// else if (root->type == CHAR_AND)
+	// {
+	// 	if (executor_aux(px, root->left) == 0)
+	// 		executor_aux(px, root->right);
+	// }
+	// else if(root->type == CHAR_OR)
+	// {
+		
+	// }
+	
 }
 
 int	executor(t_px *px, int i, t_ast *cmd_node)
@@ -266,9 +275,32 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 }
 
 /* Executes a subtree that is only composed out of a builtin function. */
-int	executor_builtin_func(t_ast *node, t_px *px)
+int	executor_builtin_func(t_px *px)
 {
-	return (builtin_functions(node, NULL, px, TO_RETURN));
+	int	exit_code;
+
+	redirections_setup(px->root_tree, px);
+	exit_code = builtin_functions(px->root_tree, NULL, px, TO_RETURN);
+	dup2(px->fd_stdin, STDIN_FILENO);
+	dup2(px->fd_stdout, STDOUT_FILENO);
+	close(px->fd_stdin);
+	close(px->fd_stdout);
+	free_px(px);
+	return (exit_code);
+}
+
+void	exec_command_free_aux(char **paths, char **commands, t_px *px)
+{
+	t_prompt_line	*pl;
+
+	pl = to_prompt_line_struct();
+	free_arrays(commands);
+	free_arrays(paths);
+	free_px(px);
+	free_struct_to_free();
+	free_global_struct();
+	rl_clear_history();
+	free(pl->prompt);
 }
 
 void	exec_command(t_px *px, t_ast *cmd_node)
@@ -294,10 +326,7 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	}
 	if (access(commands[0], F_OK) == 0)
 		execve_checker(NULL, commands, paths, px);
-	free_arrays(commands);
-	free_arrays(paths);
-	free_px(px);
-	free_struct_to_free();
+	exec_command_free_aux(paths, commands, px);
 	error_handler("command not found", NULL, 127, NULL);
 }
 
@@ -331,8 +360,8 @@ int executor_function(t_ast *root_tree)
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
-	if (px->num_pipes == 0 && is_builtin(root_tree))
-		return (executor_builtin_func(root_tree, px));
+	if (px->num_pipes == 0 && is_builtin(px->root_tree))
+		return (executor_builtin_func(px));
 	executor_aux(px, px->root_tree);
 	j = -1;
 	while (++j < px->num_pipes)
@@ -344,9 +373,7 @@ int executor_function(t_ast *root_tree)
 	while (++num < px->num_commands)
 		waitpid(px->pids[num], &status, 0);
 	if (px->num_commands == 0)
-	{
 		redirections_setup(px->root_tree, px);
-	}
 	num = px->num_commands;	
 	free_px(px);
 	if (num != 0 && WIFEXITED(status))
@@ -375,7 +402,7 @@ void	error_handler(char *msg, char *file_name, int error_code, t_px *px)
 	}
 	else
 	{
-		err_msg = ft_strjoin("./pipex: ", file_name);
+		err_msg = ft_strjoin("./minishell: ", file_name);
 		perror(err_msg);
 		free(err_msg);
 		exit(error_code);

@@ -66,6 +66,8 @@ enum e_token_type
 	CHAR_SPACE = ' ',
 	CHAR_TAB = '\t',
 	CHAR_NEWLINE = '\n',
+	CHAR_OPAREN = '(',
+	CHAR_CPAREN = ')',
 	CHAR_NULL = 0,
 	CHAR_APPEND = 256,
 	CHAR_HEREDOC,
@@ -117,8 +119,6 @@ typedef	struct s_prompt_line
 }	t_prompt_line;
 
 /* lexer.c */
-t_global *global_struct(void);
-t_to_free	*to_free_struct(void);
 int	check_matching_quotes(char *input);
 t_token	*get_last_token(t_lexer *lexer);
 t_token	*get_previous_token(t_token *first_token, t_token *curr_token);
@@ -136,7 +136,6 @@ int	check_only_terminal(char *input);
 void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer);
 void	process_char(char *input, t_token_aux *aux, t_lexer *lexer);
 void	clean_last_tokens(t_token_aux *aux, t_lexer *lexer);
-char	*find_ev(char *to_expand);
 void	insert_expansion(t_token *token, int sta, int len, char *mid_str);
 void	token_expansion_aux(t_token *token);
 void	token_expansion(t_token_aux *aux, t_lexer *lexer);
@@ -162,6 +161,8 @@ void ast_to_sexpr(t_ast *node);
 void	free_ast(t_ast *root);
 
 /* aux.c */
+t_global *global_struct(void);
+t_to_free	*to_free_struct(void);
 void	init_ev(char *envp[]);
 void	init_global_struct(char *envp[]);
 void	free_global_struct(void);
@@ -190,6 +191,8 @@ int executor_function(t_ast *root_tree);
 void	error_handler(char *msg, char *file_name, int error_code, t_px *px);
 void	malloc_error_handler(void *ptr, int error_code);
 void	free_struct_to_free(void);
+int	executor_builtin_func(t_px *px);
+
 
 /* terminal.c */
 void	terminal();
@@ -212,6 +215,9 @@ t_prompt_line	*to_prompt_line_struct(void);
 /* env.c */
 void	add_env(char *to_add);
 void	update_env(char *env_to_change, char *new_env, char *to_free);
+char	*find_ev(char *to_expand);
+void	remove_env(char *env_to_remove);
+void	remove_env_aux(int count);
 
 void	handler(int sig);
 

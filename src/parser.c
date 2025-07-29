@@ -206,7 +206,6 @@ void	free_ast(t_ast *root)
 	}
 }
 
-/* TODO: To check if this is the source of the double free of $USER */
 void	free_parser_struct(t_parser *par)
 {
 	if (par)
@@ -241,12 +240,7 @@ t_parser	*init_paser(t_lexer *lex)
 
 void	infix_binding_power(int type, t_bp *bp)
 {
-	if (type == ';' || type == '&')
-	{
-		bp->l = 1;
-		bp->r = 2;
-	}
-	else if (type == CHAR_AND || type == CHAR_OR)
+	if (type == CHAR_AND || type == CHAR_OR)
 	{
 		bp->l = 3;
 		bp->r = 4;
@@ -255,6 +249,11 @@ void	infix_binding_power(int type, t_bp *bp)
 	{
 		bp->l = 5;
 		bp->r = 6;
+	}
+	else if (type == CHAR_OPAREN)
+	{
+		bp->l = 1;
+		bp->r = 1;
 	}
 	else
 	{
@@ -299,6 +298,12 @@ t_ast	*parse_simple_command(t_parser *par)
 			else
 				ast_node_addback(cmd, par->curr_token);
 			par->curr_token = par->curr_token->next;
+		}
+		else if (par->curr_token->type == CHAR_OPAREN)
+		{
+			par->curr_token = par->curr_token->next;
+			cmd = parser_function(par, 1);
+			return (cmd);
 		}
 		else
 			break;

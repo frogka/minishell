@@ -1,22 +1,5 @@
 #include "../includes/minishell.h"
 
-/* TODO:
-===> Handle the errors comming from unclosed quotes */
-
-t_global *global_struct(void)
-{
-	static t_global	global;
-
-	return (&global);
-}
-
-t_to_free	*to_free_struct(void)
-{
-	static t_to_free	to_free;
-
-	return (&to_free);
-}
-
 /* Start Init functions */
 
 void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
@@ -90,27 +73,6 @@ t_token	*add_token_back(t_lexer *lexer, int len_input)
 	}
 }
 
-char	*find_ev(char *to_expand)
-{
-	t_global 	*global;
-	int			i;
-	char		*result;
-
-	global = global_struct();
-	i = -1;
-	while (global->ev[++i])
-	{
-		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0
-				&& (global->ev[i][ft_strlen(to_expand)]) == '=')
-		{
-			result = ft_substr(global->ev[i], ft_strlen(to_expand) + 1,
-						ft_strlen(global->ev[i]));
-			return (result);
-		}
-	}
-	return (ft_strdup(""));
-}
-
 int	check_matching_quotes(char *input)
 {
 	int		i;
@@ -137,10 +99,40 @@ int	check_matching_quotes(char *input)
 	}
 	if (counter > 0)
 	{
-		printf("we have a problem!\n");
-		return (1);
+		printf("Error: Unclosed quotation detected\n");
+		return (EXIT_FAILURE);
 	}
-	return (0);
+	return (EXIT_SUCCESS);
+}
+
+int	check_matching_parenthesis(t_lexer *lexer)
+{
+	int		i;
+	int		counter;
+	t_token	*curr_token;
+
+	i = -1;
+	counter = 0;
+	curr_token = lexer->first_token;
+	while (++i < lexer->count_token)
+	{
+		if (curr_token->type == CHAR_CPAREN)
+			counter--;
+		else if (curr_token->type == CHAR_OPAREN)
+			counter++;
+		if (counter < 0)
+		{
+			printf("Error: Invalid Parenthesis\n");
+			return (EXIT_FAILURE);
+		}
+		curr_token = curr_token->next;
+	}
+	if (counter != 0)
+	{
+		printf("Error: Invalid Parenthesis\n");
+		return (EXIT_FAILURE);
+	}
+	return (EXIT_SUCCESS);
 }
 
 int	check_only_terminal(char *input)
@@ -171,23 +163,26 @@ int	lexer_function(char *input, t_lexer *lexer)
 	{
 		lexer->first_token = NULL;
 		lexer->count_token = 0;
-		return (0);
+		return (EXIT_SUCCESS);
 	}
-	if (check_matching_quotes(input))
-		return (1);
+	if (check_matching_quotes(input) == EXIT_FAILURE)
+		return (EXIT_FAILURE);
 	if (!lexer)
-		return (1);
+		return (EXIT_FAILURE);
 	init_lexer_aux(input, &aux, lexer);
 	process_char(input, &aux, lexer);
 	clean_last_tokens(&aux, lexer);
 	token_expansion(&aux, lexer);
-	return (0);
+	if (check_matching_parenthesis(lexer) == EXIT_FAILURE)
+		return (EXIT_FAILURE);
+	return (EXIT_SUCCESS);
 }
 
 void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 {
 	if (*f == 0 && (input[aux->i] == CHAR_PIPE || input[aux->i] == CHAR_OUTRED
-			|| input[aux->i] == CHAR_INRED || input[aux->i] == CHAR_AMPERSAND))
+			|| input[aux->i] == CHAR_INRED || input[aux->i] == CHAR_AMPERSAND
+			|| input[aux->i] == CHAR_OPAREN || input[aux->i] == CHAR_CPAREN))
 	{
 		if (aux->j != 0)
 		{
@@ -313,39 +308,13 @@ void	process_char_quote(char *input, t_token_aux *aux, t_lexer *lexer)
 	}
 	if (input[aux->i] == aux->status)
 	{
+		aux->curr_token->type = aux->status;
 		aux->curr_token->data[aux->j] = 0;
 		aux->j = 0;
 		aux->status = DEF;
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 	}
 	else
-	{
-		aux->curr_token->data[aux->j] = input[aux->i];
-		aux->curr_token->type = aux->status;
-		aux->j++;
-	}
-}
-
-void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer)
-{
-	int f;
-
-	f = 0;
-	if (input[aux->i] == '\\' && input[aux->i + 1] == CHAR_DQUOTE)
-	{
-		aux->curr_token->data[(aux->j)++] = input[aux->i + 1];
-		aux->i += 2;
-	}
-	if (input[aux->i] == aux->status)
-	{
-		aux->curr_token->data[aux->j] = 0;
-		aux->j = 0;
-		aux->status = DEF;
-		aux->curr_token = add_token_back(lexer, aux->len_input);
-		f = 1;
-	}
-	handle_quote_1char(input, aux, lexer, &f);
-	if (f == 0)
 	{
 		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->curr_token->type = aux->status;

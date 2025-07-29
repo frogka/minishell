@@ -1,5 +1,18 @@
 #include "../includes/minishell.h"
 
+t_global *global_struct(void)
+{
+	static t_global	global;
+
+	return (&global);
+}
+
+t_to_free	*to_free_struct(void)
+{
+	static t_to_free	to_free;
+
+	return (&to_free);
+}
 
 void	init_ev(char *envp[])
 {

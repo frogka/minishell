@@ -3,20 +3,6 @@
 /* TODO:
 ===> Handle the errors comming from unclosed quotes */
 
-t_global *global_struct(void)
-{
-	static t_global	global;
-
-	return (&global);
-}
-
-t_to_free	*to_free_struct(void)
-{
-	static t_to_free	to_free;
-
-	return (&to_free);
-}
-
 /* Start Init functions */
 
 void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
@@ -116,10 +102,10 @@ int	check_matching_quotes(char *input)
 	}
 	if (counter > 0)
 	{
-		printf("we have a problem!\n");
-		return (1);
+		printf("Error: Unclosed quotation detected\n");
+		return (EXIT_FAILURE);
 	}
-	return (0);
+	return (EXIT_SUCCESS);
 }
 
 int	check_only_terminal(char *input)
@@ -150,17 +136,17 @@ int	lexer_function(char *input, t_lexer *lexer)
 	{
 		lexer->first_token = NULL;
 		lexer->count_token = 0;
-		return (0);
+		return (EXIT_SUCCESS);
 	}
 	if (check_matching_quotes(input))
-		return (1);
+		return (EXIT_FAILURE);
 	if (!lexer)
-		return (1);
+		return (EXIT_FAILURE);
 	init_lexer_aux(input, &aux, lexer);
 	process_char(input, &aux, lexer);
 	clean_last_tokens(&aux, lexer);
 	token_expansion(&aux, lexer);
-	return (0);
+	return (EXIT_SUCCESS);
 }
 
 void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)

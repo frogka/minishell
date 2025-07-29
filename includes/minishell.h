@@ -117,8 +117,6 @@ typedef	struct s_prompt_line
 }	t_prompt_line;
 
 /* lexer.c */
-t_global *global_struct(void);
-t_to_free	*to_free_struct(void);
 int	check_matching_quotes(char *input);
 t_token	*get_last_token(t_lexer *lexer);
 t_token	*get_previous_token(t_token *first_token, t_token *curr_token);
@@ -161,6 +159,8 @@ void ast_to_sexpr(t_ast *node);
 void	free_ast(t_ast *root);
 
 /* aux.c */
+t_global *global_struct(void);
+t_to_free	*to_free_struct(void);
 void	init_ev(char *envp[]);
 void	init_global_struct(char *envp[]);
 void	free_global_struct(void);

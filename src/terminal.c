@@ -14,7 +14,11 @@ int	run_command(char *line)
 	if (!lexer)
 		return (EXIT_FAILURE);
 
-	lexer_function(line, lexer);
+	if (lexer_function(line, lexer) == EXIT_FAILURE)
+	{
+		free_lexer(lexer);
+		return (EXIT_FAILURE);
+	}
 	free(line);
 	par = init_paser(lexer);
 	root_tree = parser_function(par, 0);
@@ -24,10 +28,7 @@ int	run_command(char *line)
 	to_free->root_tree = root_tree;
 	to_free->lexer = lexer;
 	global->exit_code = executor_function(root_tree);
-	/* TODO: Change it to the free_to_free_structure */
-	free_lexer(lexer);
-	free_ast(root_tree);
-	free_parser_struct(par);
+	free_struct_to_free();
 	return (EXIT_SUCCESS);
 }
 

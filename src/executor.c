@@ -234,6 +234,16 @@ void	executor_aux(t_px *px, t_ast *root)
 		executor_aux(px, root->left);
 		executor_aux(px, root->right);
 	}
+	// else if (root->type == CHAR_AND)
+	// {
+	// 	if (executor_aux(px, root->left) == 0)
+	// 		executor_aux(px, root->right);
+	// }
+	// else if(root->type == CHAR_OR)
+	// {
+		
+	// }
+	
 }
 
 int	executor(t_px *px, int i, t_ast *cmd_node)
@@ -363,9 +373,7 @@ int executor_function(t_ast *root_tree)
 	while (++num < px->num_commands)
 		waitpid(px->pids[num], &status, 0);
 	if (px->num_commands == 0)
-	{
 		redirections_setup(px->root_tree, px);
-	}
 	num = px->num_commands;	
 	free_px(px);
 	if (num != 0 && WIFEXITED(status))

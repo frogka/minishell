@@ -22,7 +22,7 @@ int	run_command(char *line)
 	free(line);
 	par = init_paser(lexer);
 	root_tree = parser_function(par, 0);
-	print_ast_sexpr(root_tree);
+	// print_ast_sexpr(root_tree);
 	
 	to_free = to_free_struct();
 	to_free->par = par;
@@ -51,7 +51,7 @@ void	terminal()
 			free_global_struct();
 			exit_builtin();
 		}
-		else if (ft_strlen(pl->line) <= 0 && check_only_terminal(pl->line))
+		else if (ft_strlen(pl->line) >= 0 && check_only_terminal(pl->line))
 		{
 			free(pl->line);
 			continue;

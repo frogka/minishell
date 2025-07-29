@@ -1,8 +1,5 @@
 #include "../includes/minishell.h"
 
-/* TODO:
-===> Handle the errors comming from unclosed quotes */
-
 /* Start Init functions */
 
 void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)

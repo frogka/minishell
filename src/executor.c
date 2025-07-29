@@ -2,7 +2,6 @@
 
 /* TODOS
 SHOULD BE DONE ===> Add error handling functions
-===> When doing $USER, there is a double free problem
 ===> Change the executor function to handle && and ||. This should mean that we need to divide the parts
 	 of the tree that 
 */
@@ -282,10 +281,16 @@ int	executor_builtin_func(t_px *px)
 
 void	exec_command_free_aux(char **paths, char **commands, t_px *px)
 {
+	t_prompt_line	*pl;
+
+	pl = to_prompt_line_struct();
 	free_arrays(commands);
 	free_arrays(paths);
 	free_px(px);
 	free_struct_to_free();
+	free_global_struct();
+	rl_clear_history();
+	free(pl->prompt);
 }
 
 void	exec_command(t_px *px, t_ast *cmd_node)

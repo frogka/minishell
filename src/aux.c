@@ -64,13 +64,11 @@ void	free_lexer(t_lexer *lexer)
 
 	while (lexer->first_token)
 	{
-		// printf("This is the content: '%s' and this is the type: '%i'\n", lexer->first_token->content, lexer->first_token->type);
 		temp = lexer->first_token;
 		lexer->first_token = lexer->first_token->next;
 		free(temp->data);
 		free(temp);
 	}
-	// printf("Number of tokens: %i\n", lexer->count_token);
 	free(lexer);
 }
 

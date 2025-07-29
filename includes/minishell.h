@@ -66,6 +66,8 @@ enum e_token_type
 	CHAR_SPACE = ' ',
 	CHAR_TAB = '\t',
 	CHAR_NEWLINE = '\n',
+	CHAR_OPAREN = '(',
+	CHAR_CPAREN = ')',
 	CHAR_NULL = 0,
 	CHAR_APPEND = 256,
 	CHAR_HEREDOC,

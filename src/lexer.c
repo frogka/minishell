@@ -105,6 +105,36 @@ int	check_matching_quotes(char *input)
 	return (EXIT_SUCCESS);
 }
 
+int	check_matching_parenthesis(t_lexer *lexer)
+{
+	int		i;
+	int		counter;
+	t_token	*curr_token;
+
+	i = -1;
+	counter = 0;
+	curr_token = lexer->first_token;
+	while (++i < lexer->count_token)
+	{
+		if (curr_token->type == CHAR_CPAREN)
+			counter--;
+		else if (curr_token->type == CHAR_OPAREN)
+			counter++;
+		if (counter < 0)
+		{
+			printf("Error: Invalid Parenthesis\n");
+			return (EXIT_FAILURE);
+		}
+		curr_token = curr_token->next;
+	}
+	if (counter != 0)
+	{
+		printf("Error: Invalid Parenthesis\n");
+		return (EXIT_FAILURE);
+	}
+	return (EXIT_SUCCESS);
+}
+
 int	check_only_terminal(char *input)
 {
 	int	i;
@@ -135,7 +165,7 @@ int	lexer_function(char *input, t_lexer *lexer)
 		lexer->count_token = 0;
 		return (EXIT_SUCCESS);
 	}
-	if (check_matching_quotes(input))
+	if (check_matching_quotes(input) == EXIT_FAILURE)
 		return (EXIT_FAILURE);
 	if (!lexer)
 		return (EXIT_FAILURE);
@@ -143,13 +173,16 @@ int	lexer_function(char *input, t_lexer *lexer)
 	process_char(input, &aux, lexer);
 	clean_last_tokens(&aux, lexer);
 	token_expansion(&aux, lexer);
+	if (check_matching_parenthesis(lexer) == EXIT_FAILURE)
+		return (EXIT_FAILURE);
 	return (EXIT_SUCCESS);
 }
 
 void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 {
 	if (*f == 0 && (input[aux->i] == CHAR_PIPE || input[aux->i] == CHAR_OUTRED
-			|| input[aux->i] == CHAR_INRED || input[aux->i] == CHAR_AMPERSAND))
+			|| input[aux->i] == CHAR_INRED || input[aux->i] == CHAR_AMPERSAND
+			|| input[aux->i] == CHAR_OPAREN || input[aux->i] == CHAR_CPAREN))
 	{
 		if (aux->j != 0)
 		{

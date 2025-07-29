@@ -250,6 +250,11 @@ void	infix_binding_power(int type, t_bp *bp)
 		bp->l = 5;
 		bp->r = 6;
 	}
+	else if (type == CHAR_OPAREN)
+	{
+		bp->l = 1;
+		bp->r = 1;
+	}
 	else
 	{
 		bp->l = -1;
@@ -293,6 +298,12 @@ t_ast	*parse_simple_command(t_parser *par)
 			else
 				ast_node_addback(cmd, par->curr_token);
 			par->curr_token = par->curr_token->next;
+		}
+		else if (par->curr_token->type == CHAR_OPAREN)
+		{
+			par->curr_token = par->curr_token->next;
+			cmd = parser_function(par, 1);
+			return (cmd);
 		}
 		else
 			break;

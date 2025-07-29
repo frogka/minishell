@@ -136,7 +136,6 @@ int	check_only_terminal(char *input);
 void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer);
 void	process_char(char *input, t_token_aux *aux, t_lexer *lexer);
 void	clean_last_tokens(t_token_aux *aux, t_lexer *lexer);
-char	*find_ev(char *to_expand);
 void	insert_expansion(t_token *token, int sta, int len, char *mid_str);
 void	token_expansion_aux(t_token *token);
 void	token_expansion(t_token_aux *aux, t_lexer *lexer);
@@ -190,6 +189,8 @@ int executor_function(t_ast *root_tree);
 void	error_handler(char *msg, char *file_name, int error_code, t_px *px);
 void	malloc_error_handler(void *ptr, int error_code);
 void	free_struct_to_free(void);
+int	executor_builtin_func(t_px *px);
+
 
 /* terminal.c */
 void	terminal();
@@ -212,5 +213,8 @@ t_prompt_line	*to_prompt_line_struct(void);
 /* env.c */
 void	add_env(char *to_add);
 void	update_env(char *env_to_change, char *new_env, char *to_free);
+char	*find_ev(char *to_expand);
+void	remove_env(char *env_to_remove);
+void	remove_env_aux(int count);
 
 #endif

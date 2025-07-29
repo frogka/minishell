@@ -90,27 +90,6 @@ t_token	*add_token_back(t_lexer *lexer, int len_input)
 	}
 }
 
-char	*find_ev(char *to_expand)
-{
-	t_global 	*global;
-	int			i;
-	char		*result;
-
-	global = global_struct();
-	i = -1;
-	while (global->ev[++i])
-	{
-		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0
-				&& (global->ev[i][ft_strlen(to_expand)]) == '=')
-		{
-			result = ft_substr(global->ev[i], ft_strlen(to_expand) + 1,
-						ft_strlen(global->ev[i]));
-			return (result);
-		}
-	}
-	return (ft_strdup(""));
-}
-
 int	check_matching_quotes(char *input)
 {
 	int		i;
@@ -313,39 +292,13 @@ void	process_char_quote(char *input, t_token_aux *aux, t_lexer *lexer)
 	}
 	if (input[aux->i] == aux->status)
 	{
+		aux->curr_token->type = aux->status;
 		aux->curr_token->data[aux->j] = 0;
 		aux->j = 0;
 		aux->status = DEF;
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 	}
 	else
-	{
-		aux->curr_token->data[aux->j] = input[aux->i];
-		aux->curr_token->type = aux->status;
-		aux->j++;
-	}
-}
-
-void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer)
-{
-	int f;
-
-	f = 0;
-	if (input[aux->i] == '\\' && input[aux->i + 1] == CHAR_DQUOTE)
-	{
-		aux->curr_token->data[(aux->j)++] = input[aux->i + 1];
-		aux->i += 2;
-	}
-	if (input[aux->i] == aux->status)
-	{
-		aux->curr_token->data[aux->j] = 0;
-		aux->j = 0;
-		aux->status = DEF;
-		aux->curr_token = add_token_back(lexer, aux->len_input);
-		f = 1;
-	}
-	handle_quote_1char(input, aux, lexer, &f);
-	if (f == 0)
 	{
 		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->curr_token->type = aux->status;

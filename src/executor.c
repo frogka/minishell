@@ -5,6 +5,7 @@ SHOULD BE DONE ===> Add error handling functions
 ===> When doing $USER, there is a double free problem
 ===> Change the executor function to handle && and ||. This should mean that we need to divide the parts
 	 of the tree that 
+===> When only using builtin functions, there are no redirections working
 */
 
 /* Start of Redirections */
@@ -266,9 +267,18 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 }
 
 /* Executes a subtree that is only composed out of a builtin function. */
-int	executor_builtin_func(t_ast *node, t_px *px)
+int	executor_builtin_func(t_px *px)
 {
-	return (builtin_functions(node, NULL, px, TO_RETURN));
+	int	exit_code;
+
+	redirections_setup(px->root_tree, px);
+	exit_code = builtin_functions(px->root_tree, NULL, px, TO_RETURN);
+	dup2(px->fd_stdin, STDIN_FILENO);
+	dup2(px->fd_stdout, STDOUT_FILENO);
+	close(px->fd_stdin);
+	close(px->fd_stdout);
+	free_px(px);
+	return (exit_code);
 }
 
 void	exec_command(t_px *px, t_ast *cmd_node)
@@ -331,8 +341,8 @@ int executor_function(t_ast *root_tree)
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
-	if (px->num_pipes == 0 && is_builtin(root_tree))
-		return (executor_builtin_func(root_tree, px));
+	if (px->num_pipes == 0 && is_builtin(px->root_tree))
+		return (executor_builtin_func(px));
 	executor_aux(px, px->root_tree);
 	j = -1;
 	while (++j < px->num_pipes)

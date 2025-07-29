@@ -24,6 +24,7 @@ int	run_command(char *line)
 	to_free->root_tree = root_tree;
 	to_free->lexer = lexer;
 	global->exit_code = executor_function(root_tree);
+	/* TODO: Change it to the free_to_free_structure */
 	free_lexer(lexer);
 	free_ast(root_tree);
 	free_parser_struct(par);

@@ -20,10 +20,7 @@ int	builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit)
 		exit(exit_code);
 	}		
 	else
-	{
-		free_px(px);
 		return (exit_code);
-	}
 }
 
 int	is_builtin(t_ast *n)

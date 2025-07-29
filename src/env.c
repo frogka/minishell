@@ -117,3 +117,24 @@ void	add_env(char *to_add)
 		global->ev = new_env;
 	}
 }
+
+char	*find_ev(char *to_expand)
+{
+	t_global 	*global;
+	int			i;
+	char		*result;
+
+	global = global_struct();
+	i = -1;
+	while (global->ev[++i])
+	{
+		if (ft_strncmp(to_expand, global->ev[i], ft_strlen(to_expand)) == 0
+				&& (global->ev[i][ft_strlen(to_expand)]) == '=')
+		{
+			result = ft_substr(global->ev[i], ft_strlen(to_expand) + 1,
+						ft_strlen(global->ev[i]));
+			return (result);
+		}
+	}
+	return (ft_strdup(""));
+}

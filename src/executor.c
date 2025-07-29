@@ -5,7 +5,6 @@ SHOULD BE DONE ===> Add error handling functions
 ===> When doing $USER, there is a double free problem
 ===> Change the executor function to handle && and ||. This should mean that we need to divide the parts
 	 of the tree that 
-===> When only using builtin functions, there are no redirections working
 */
 
 /* Start of Redirections */
@@ -281,6 +280,14 @@ int	executor_builtin_func(t_px *px)
 	return (exit_code);
 }
 
+void	exec_command_free_aux(char **paths, char **commands, t_px *px)
+{
+	free_arrays(commands);
+	free_arrays(paths);
+	free_px(px);
+	free_struct_to_free();
+}
+
 void	exec_command(t_px *px, t_ast *cmd_node)
 {
 	int		j;
@@ -304,10 +311,7 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	}
 	if (access(commands[0], F_OK) == 0)
 		execve_checker(NULL, commands, paths, px);
-	free_arrays(commands);
-	free_arrays(paths);
-	free_px(px);
-	free_struct_to_free();
+	exec_command_free_aux(paths, commands, px);
 	error_handler("command not found", NULL, 127, NULL);
 }
 
@@ -385,7 +389,7 @@ void	error_handler(char *msg, char *file_name, int error_code, t_px *px)
 	}
 	else
 	{
-		err_msg = ft_strjoin("./pipex: ", file_name);
+		err_msg = ft_strjoin("./minishell: ", file_name);
 		perror(err_msg);
 		free(err_msg);
 		exit(error_code);

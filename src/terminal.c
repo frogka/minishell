@@ -41,6 +41,8 @@ void	terminal()
 	while (1)
 	{
 		pl->line = readline(pl->prompt);
+		if (pl->line == NULL)
+			continue;
 		if (ft_strlen(pl->line) == 4 && ft_strncmp(pl->line, "exit", 4) == 0)
 		{
 			rl_clear_history();

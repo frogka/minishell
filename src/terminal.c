@@ -57,7 +57,7 @@ void	terminal()
 			free_global_struct();
 			exit_builtin();
 		}
-		else if (ft_strlen(pl->line) <= 0 && check_only_terminal(pl->line))
+		else if (ft_strlen(pl->line) >= 0 && check_only_terminal(pl->line))
 		{
 			free(pl->line);
 			continue;

@@ -1,5 +1,7 @@
 #include "../includes/minishell.h"
 
+/* TODO: terminal is wrapping aroung and going over the prompt*/
+
 int	run_command(char *line)
 {
 	t_parser	*par;
@@ -21,6 +23,12 @@ int	run_command(char *line)
 	}
 	free(line);
 	par = init_paser(lexer);
+	// for(int i = 0; i < lexer->count_token; i++)
+	// {
+	// 	printf("[%i] %s\n", lexer->first_token->type, lexer->first_token->data);
+	// 	lexer->first_token = lexer->first_token->next;
+	// }
+	
 	root_tree = parser_function(par, 0);
 	print_ast_sexpr(root_tree);
 	

@@ -250,11 +250,6 @@ void	infix_binding_power(int type, t_bp *bp)
 		bp->l = 5;
 		bp->r = 6;
 	}
-	else if (type == CHAR_OPAREN)
-	{
-		bp->l = 1;
-		bp->r = 1;
-	}
 	else
 	{
 		bp->l = -1;
@@ -302,7 +297,8 @@ t_ast	*parse_simple_command(t_parser *par)
 		else if (par->curr_token->type == CHAR_OPAREN)
 		{
 			par->curr_token = par->curr_token->next;
-			cmd = parser_function(par, 1);
+			cmd = parser_function(par, 0);
+			par->curr_token = par->curr_token->next;
 			return (cmd);
 		}
 		else
@@ -322,7 +318,7 @@ void	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_n
 
 	while (1)
 	{
-		if (par->curr_token == NULL)
+		if (par->curr_token == NULL || par->curr_token->type == CHAR_CPAREN)
 			break ;
 		else if (is_default_token(par->curr_token->type) && is_redirect_token((*l_node)->type))
 		{
@@ -337,6 +333,12 @@ void	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_n
 				break;
 			op = par->curr_token;
 			par->curr_token = par->curr_token->next;
+			if (par->curr_token == NULL || par->curr_token->type == CHAR_CPAREN)
+			{
+				printf("Error: Binary operator missing right operand\n");
+				printf("To add cleanup functions\n");
+				exit(EXIT_FAILURE);
+			}
 			*r_node = parser_function(par, bp.r);
 			*l_node = create_ast_structure(op, *l_node, *r_node);
 			continue;

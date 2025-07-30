@@ -2,6 +2,40 @@
 
 /* TODO: terminal is wrapping aroung and going over the prompt*/
 
+int	count_nodes(t_ast *root_tree)
+{
+	int	total;
+
+	total = 0;
+	if (root_tree == NULL)
+		return (0);
+	total++;
+	total += count_nodes(root_tree->left);
+	total += count_nodes(root_tree->right);
+	return (total);
+}
+
+int	count_paren(t_lexer *lexer)
+{
+	int		total;
+	int		i;
+	t_token	*curr_tok;
+
+	total = 0;
+	i = 0;
+	if (lexer == NULL || lexer->first_token == NULL)
+		return (0);
+	curr_tok = lexer->first_token;
+	while (i < lexer->count_token)
+	{
+		if (curr_tok->type == CHAR_OPAREN || curr_tok->type == CHAR_CPAREN)
+			total++;
+		curr_tok = curr_tok->next;
+		i++;
+	}
+	return (total);
+}
+
 int	run_command(char *line)
 {
 	t_parser	*par;
@@ -23,20 +57,18 @@ int	run_command(char *line)
 	}
 	free(line);
 	par = init_paser(lexer);
-	// for(int i = 0; i < lexer->count_token; i++)
-	// {
-	// 	printf("[%i] %s\n", lexer->first_token->type, lexer->first_token->data);
-	// 	lexer->first_token = lexer->first_token->next;
-	// }
 	
 	root_tree = parser_function(par, 0);
-	print_ast_sexpr(root_tree);
-	
+	// print_ast_sexpr(root_tree);
 	to_free = to_free_struct();
 	to_free->par = par;
 	to_free->root_tree = root_tree;
 	to_free->lexer = lexer;
-	global->exit_code = executor_function(root_tree);
+
+	if (count_nodes(root_tree) == (lexer->count_token - count_paren(lexer)))
+		global->exit_code = executor_function(root_tree);
+	else
+		global->exit_code = 2;
 	free_struct_to_free();
 	return (EXIT_SUCCESS);
 }
@@ -52,10 +84,11 @@ void	terminal()
 		pl->line = readline(pl->prompt);
 		if (pl->line == NULL)
 			continue;
-		if (ft_strlen(pl->line) == 4 && ft_strncmp(pl->line, "exit", 4) == 0)
+		if (ft_strncmp(pl->line, "exit", 4) == 0)
 		{
 			rl_clear_history();
 			free_global_struct();
+			free(pl->line);
 			exit_builtin();
 		}
 		else if (ft_strlen(pl->line) > 0 && check_only_terminal(pl->line))

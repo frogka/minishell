@@ -2,6 +2,10 @@
 
 /* Start of AUX functions */
 
+/* TODOS:
+'((echo this && echo that) || > ouput) echo cona' is giving back the tree (|| (&& (echo this) (echo that)) (> ouput))
+*/
+
 void	print_ast_node(t_ast *node)
 {
 	if (node == NULL)
@@ -264,15 +268,22 @@ t_ast	*parse_simple_command(t_parser *par)
 	t_ast	*redi;
 	t_ast	*redi_root;
 	t_token	*token_redirect;
+	t_token	*token_prev;
 
 	file = NULL;
 	cmd = NULL;
 	redi = NULL;
 	redi_root = NULL;
+	token_prev = NULL;
 
 	while (par->curr_token && !is_operator_token(par->curr_token->type))
 	{
-		if (is_redirect_token(par->curr_token->type))
+		if (token_prev && (is_default_token(token_prev->type) || is_redirect_token(token_prev->type)) &&  par->curr_token->type == CHAR_OPAREN)
+		{
+			printf("syntax error near unexpected token `('\n");
+			return (NULL);
+		}
+		else if (is_redirect_token(par->curr_token->type))
 		{
 			token_redirect = par->curr_token;
 			par->curr_token = par->curr_token->next;
@@ -284,6 +295,7 @@ t_ast	*parse_simple_command(t_parser *par)
 			file = create_ast_node(CHAR_DEF, par->curr_token->data);
 			redi = create_ast_structure(token_redirect, NULL, file);
 			ast_node_placeback(&redi_root, redi, RIGHT);
+			token_prev = par->curr_token;
 			par->curr_token = par->curr_token->next;
 		}
 		else if(is_default_token(par->curr_token->type))
@@ -292,6 +304,7 @@ t_ast	*parse_simple_command(t_parser *par)
 				cmd = create_ast_node(CHAR_DEF, par->curr_token->data);
 			else
 				ast_node_addback(cmd, par->curr_token);
+			token_prev = par->curr_token;
 			par->curr_token = par->curr_token->next;
 		}
 		else if (par->curr_token->type == CHAR_OPAREN)
@@ -308,10 +321,10 @@ t_ast	*parse_simple_command(t_parser *par)
 		cmd = redi_root;
 	else if (cmd != NULL && redi_root != NULL)
 		cmd->right = redi_root;
-	return (cmd);	
+	return (cmd);
 }
 
-void	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_node)
+int	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_node)
 {
 	t_bp		bp;
 	t_token		*op;
@@ -320,11 +333,10 @@ void	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_n
 	{
 		if (par->curr_token == NULL || par->curr_token->type == CHAR_CPAREN)
 			break ;
-		else if (is_default_token(par->curr_token->type) && is_redirect_token((*l_node)->type))
+		else if ((is_default_token(par->curr_token->type) || is_redirect_token(par->curr_token->type)) && ((*l_node)->type == CHAR_AND || (*l_node)->type == CHAR_OR))
 		{
-			ast_node_addback(*r_node, par->curr_token);
-			par->curr_token = par->curr_token->next;
-			break;
+			printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->data);
+			return (EXIT_FAILURE);
 		}
 		infix_binding_power(par->curr_token->type, &bp);
 		if(bp.l != -1 && bp.r != -1)
@@ -336,15 +348,16 @@ void	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_n
 			if (par->curr_token == NULL || par->curr_token->type == CHAR_CPAREN)
 			{
 				printf("Error: Binary operator missing right operand\n");
-				printf("To add cleanup functions\n");
-				exit(EXIT_FAILURE);
+				return (EXIT_FAILURE);
 			}
+			
 			*r_node = parser_function(par, bp.r);
 			*l_node = create_ast_structure(op, *l_node, *r_node);
 			continue;
 		}
 		break;
 	}
+	return (EXIT_SUCCESS);
 }
 
 t_ast	*parser_function(t_parser *par, int min_bp)
@@ -362,7 +375,8 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 		// printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->content);
 		return (NULL);
 	}
-	parser_function_loop(par, min_bp, &l_node, &r_node);
+	if (parser_function_loop(par, min_bp, &l_node, &r_node) == EXIT_FAILURE)
+		return (NULL);
 	return (l_node);
 }
 

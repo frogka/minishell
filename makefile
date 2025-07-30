@@ -56,6 +56,10 @@ fclean: clean
 	rm -rf ./libft/*.a
 
 re: fclean ${NAME}
+	@clear
+
+test: re
+	@./minishell
 
 rebonus: fclean bonus
 

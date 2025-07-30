@@ -2,8 +2,19 @@
 
 /* TODOS
 SHOULD BE DONE ===> Add error handling functions
-===> Change the executor function to handle && and ||. This should mean that we need to divide the parts
-	 of the tree that 
+===> Check the following bug
+
+((echo this && echo that) || echo cona) | grep this
+(| (|| (&& (echo this) (echo that)) (echo cona)) (grep this))
+[124] |
+[259] ||
+[258] &&
+[-1] echo
+[-1] echo
+that
+[-1] grep
+$>Duplicating read pipe to STDIN: Bad file descriptor
+
 */
 
 /* Start of Redirections */
@@ -224,7 +235,6 @@ int	executor_aux(t_px *px, t_ast *root)
 {
 	int	exit_code;
 
-	printf("[%i] %s\n", root->type, root->data);
 	if (root == NULL)
 		return (EXIT_SUCCESS);
 	if (is_default_token(root->type))
@@ -371,6 +381,7 @@ int executor_function(t_ast *root_tree)
 	t_px	*px;
 	int		status;
 	
+	status = 0;
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
@@ -383,10 +394,10 @@ int executor_function(t_ast *root_tree)
 		close(px->pipes[j][READ]);
 		close(px->pipes[j][WRITE]);
 	}
-	num = -1;
 	if (px->num_commands == 0)
 		redirections_setup(px->root_tree, px);
-	num = px->num_commands;	
+	num = px->num_commands;
+	printf("This is num %i\n", num);
 	free_px(px);
 	if (num != 0 && WIFEXITED(status))
 		return (WEXITSTATUS(status));

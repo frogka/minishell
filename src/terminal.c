@@ -81,9 +81,23 @@ void	terminal()
 	pl->prompt = ft_strdup("\033[35m$minishell> \033[0m");
 	while (1)
 	{
-		pl->line = readline(pl->prompt);
-		if (pl->line == NULL)
-			continue;
+		if (isatty(STDIN_FILENO))
+		{
+			pl->line = readline(pl->prompt);
+			if (pl->line == NULL)
+				continue;
+		}
+		else
+		{
+			pl->line = get_next_line(STDIN_FILENO);
+			if (pl->line == NULL)
+			{
+				free_global_struct();
+				exit_builtin();
+			}
+			if (pl->line[ft_strlen(pl->line) - 1] == '\n')
+				pl->line[ft_strlen(pl->line) - 1] = 0;
+		}
 		if (ft_strncmp(pl->line, "exit", 4) == 0)
 		{
 			rl_clear_history();

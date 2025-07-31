@@ -347,7 +347,6 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	if (access(commands[0], F_OK) == 0)
 		execve_checker(NULL, commands, paths, px);
 	exec_command_free_aux(paths, commands, px);
-	printf("this must appear\n");
 	error_handler("command not found", NULL, 127, NULL);
 }
 

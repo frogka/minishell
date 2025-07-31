@@ -40,11 +40,8 @@ typedef struct s_bp
 
 typedef struct s_px
 {
-	pid_t	*pids;
-	int		**pipes;
 	int		num_pipes;
 	int		num_commands;
-	int		curr_index;
 	int		fd_stdout;
 	int		fd_stdin;
 	t_ast	*root_tree;
@@ -131,7 +128,6 @@ void	handle_terminal(char *input, t_token_aux *aux, t_lexer *lexer, int *f);
 void	handle_start_quote(char *input, t_token_aux *aux, t_lexer *lexer, int *f);
 void	process_char_def(char *input, t_token_aux *aux, t_lexer *lexer);
 void	process_char_quote(char *input, t_token_aux *aux, t_lexer *lexer);
-void	process_char_dquote(char *input, t_token_aux *aux, t_lexer *lexer);
 int	check_only_terminal(char *input);
 void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer);
 void	process_char(char *input, t_token_aux *aux, t_lexer *lexer);
@@ -176,10 +172,11 @@ int	heredoc(char *limiter, t_px *px);
 int	count_number_commands(t_ast *root_tree);
 int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);
-void	create_pipeline(t_px *px);
 int	executor_aux(t_px *px, t_ast *root);
-void	child_pipe_setup(t_px *px, int i);
-int	executor(t_px *px, int i, t_ast *cmd_node);
+int	executor(t_px *px, t_ast *cmd_node);
+int	executor_pipe(t_px *px, t_ast *root);
+int	execute_subshell(t_px *px, t_ast *root);
+void	restore_fd(t_px *px);
 void	exec_command(t_px *px, t_ast *cmd_node);
 char	**commands_extractor(t_ast *cmd_node);
 char	**path_extractor(void);

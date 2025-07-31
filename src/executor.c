@@ -95,7 +95,7 @@ void	redirections_files_setup(int fd, int type, int num_output_fd)
 	if (type == CHAR_INRED || type == CHAR_HEREDOC)
 	{
 		if (dup2(fd, STDIN_FILENO) == -1)
-			error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+			error_handler("Duplicating read-end pipe to STDIN", NULL, 1, NULL);
 		close(fd);
 	}
 	else
@@ -103,13 +103,13 @@ void	redirections_files_setup(int fd, int type, int num_output_fd)
 		if (num_output_fd == 0)
 		{
 			if (dup2(fd, STDOUT_FILENO) == -1)
-				error_handler("Duplicating read-end pipe to STDOUT", NULL, 1, NULL);
+				error_handler("Duplicating write-end pipe to STDOUT", NULL, 1, NULL);
 		}
 		close(fd);
 	}
 }
 
-void	redirections_setup(t_ast *root, t_px *px)
+int	redirections_setup(t_ast *root, t_px *px)
 {
 	int	fd;
 	int	num_output_fd;
@@ -120,54 +120,19 @@ void	redirections_setup(t_ast *root, t_px *px)
 		if (is_redirect_token(root->type))
 		{
 			fd = open_fd(root->right->data, root->type, px);
+			if (fd == -1)
+			{
+				restore_fd(px);
+				printf("minishell: %s: No such file or directory\n", root->right->data);
+				return (EXIT_FAILURE);
+			}
 			redirections_files_setup(fd, root->type, num_output_fd);
 		}
 		if (root->type == CHAR_OUTRED || root->type == CHAR_APPEND)
 			num_output_fd++;
 		root = root->right;
-	}	
-}
-
-void	create_pipeline(t_px *px)
-{
-	int	i;
-
-	if (px->num_pipes == 0)
-		return ;
-	px->pipes = malloc(sizeof(int *) * (px->num_pipes));
-	if (!px->pipes)
-		error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
-	i = 0;
-	while (i < px->num_pipes)
-	{
-		px->pipes[i] = malloc(sizeof(int) * 2);
-		if (!px->pipes[i])
-			error_handler("malloc in pipe creation", NULL, EXIT_FAILURE, NULL);
-		if (pipe(px->pipes[i]) == -1)
-			error_handler("Pipe creation", NULL, EXIT_FAILURE, NULL);
-		i++;
 	}
-}
-
-void	child_pipe_setup(t_px *px, int i)
-{
-	if (i == 0)
-	{
-		if (dup2(px->pipes[0][WRITE], STDOUT_FILENO) == -1)
-			error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
-	}
-	else if (i < px->num_pipes)
-	{
-		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
-			error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
-		if (dup2(px->pipes[i][WRITE], STDOUT_FILENO) == -1)
-			error_handler("Duplicating write pipe to STDOUT\n", NULL, 1, px);
-	}
-	else
-	{
-		if (dup2(px->pipes[i - 1][READ], STDIN_FILENO) == -1)
-			error_handler("Duplicating read pipe to STDIN", NULL, 1, px);
-	}
+	return (EXIT_SUCCESS);
 }
 
 /* End of Redirections */
@@ -211,18 +176,11 @@ t_px	*initialize_px(t_ast *root_tree)
 
 	px = malloc(sizeof(t_px));
 	malloc_error_handler(px, EXIT_FAILURE);
-	px->pids = NULL;
-	px->pipes = NULL;
 	px->num_commands = count_number_commands(root_tree);
 	px->num_pipes = count_number_pipes(root_tree);
 	px->root_tree = root_tree;
-	px->curr_index = 0;
 	px->fd_stdin = dup(STDIN_FILENO);
 	px->fd_stdout = dup(STDOUT_FILENO);
-	if (px->num_commands != 0)
-		px->pids = malloc(sizeof(pid_t) * px->num_commands);
-	malloc_error_handler(px->pids, EXIT_FAILURE);
-	create_pipeline(px);
 	return (px);
 }
 
@@ -239,12 +197,15 @@ int	executor_aux(t_px *px, t_ast *root)
 		return (EXIT_SUCCESS);
 	if (is_default_token(root->type))
 	{ 
-		exit_code = executor(px, px->curr_index, root);
-		px->curr_index++;
+		exit_code = executor(px, root);
 		return (exit_code);
 	}
-	else if (root->type == CHAR_PIPE || root->type == CHAR_AMPERSAND
-			|| root->type == CHAR_DOLLAR || root->type == CHAR_QM)
+	else if (root->type == CHAR_PIPE)
+	{
+		return (executor_pipe(px, root));
+	}
+	else if (root->type == CHAR_AMPERSAND || root->type == CHAR_DOLLAR
+			|| root->type == CHAR_QM)
 	{
 		executor_aux(px, root->left);
 		executor_aux(px, root->right);
@@ -266,33 +227,82 @@ int	executor_aux(t_px *px, t_ast *root)
 	return (EXIT_SUCCESS);
 }
 
-int	executor(t_px *px, int i, t_ast *cmd_node)
+void	restore_fd(t_px *px)
 {
-	int	j;
-	int	status;
+	dup2(px->fd_stdin, STDIN_FILENO);
+	dup2(px->fd_stdout, STDOUT_FILENO);
+	close(px->fd_stdin);
+	close(px->fd_stdout);
+}
 
-	px->pids[i] = fork();
-	if (px->pids[i] == -1)
-		exit(EXIT_FAILURE);
-	if (px->pids[i] == 0)
+int	executor_pipe(t_px *px, t_ast *root)
+{
+	int	pipe_fd[2];
+	int	pids[2];
+	int	status;
+	int	exit_code;
+
+	status = 0;
+	if(pipe(pipe_fd) != 0)
+		error_handler("Laying down the pipe(s)", NULL, 1, NULL);
+	pids[0] = fork();
+	if (pids[0] == 0)
 	{
-		if (px->num_pipes !=0)
-		{
-			child_pipe_setup(px, i);
-			j = -1;
-			while (++j < px->num_pipes)
-			{
-				close(px->pipes[j][0]);
-				close(px->pipes[j][1]);
-			}
-		}
-		redirections_setup(cmd_node, px);
+		dup2(pipe_fd[WRITE], STDOUT_FILENO);
+		close(pipe_fd[READ]);
+		exit_code = execute_subshell(px, root->left);
+		exit (exit_code);
+	}
+	pids[1] = fork();
+	if (pids[1] == 0)
+	{
+		dup2(pipe_fd[READ], STDIN_FILENO);
+		close(pipe_fd[WRITE]);
+		exit_code = execute_subshell(px, root->right);
+		exit (exit_code);
+	}
+	close(pipe_fd[READ]);
+	close(pipe_fd[WRITE]);
+	waitpid(pids[0], &status, 0);
+	waitpid(pids[1], &status, 0);
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	return (EXIT_FAILURE);
+}
+
+int	execute_subshell(t_px *px, t_ast *root)
+{
+	t_px	*px_subshell;
+	int		exit_code;
+
+	px_subshell = initialize_px(root);
+	px_subshell->fd_stdin = px->fd_stdin;
+	px_subshell->fd_stdout = px->fd_stdout;
+	exit_code = executor_aux(px_subshell, root);
+	free(px_subshell);
+	return (exit_code);
+}
+
+int	executor(t_px *px, t_ast *cmd_node)
+{
+	int	status;
+	int	pid;
+
+	pid = fork();
+	status = 0;
+	if (pid == -1)
+		exit(EXIT_FAILURE);
+	if (pid == 0)
+	{
+		status = redirections_setup(cmd_node, px);
+		if (status == EXIT_FAILURE)
+			exit (EXIT_FAILURE);		
 		if (cmd_node->data == NULL || cmd_node->data[0] == 0)
 			error_handler("No command ''", NULL, 1, px);
 		if (is_default_token(cmd_node->type))
 			exec_command(px, cmd_node);
 	}
-	waitpid(px->pids[i], &status, 0);
+	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));
 	return (EXIT_FAILURE);
@@ -303,8 +313,9 @@ int	executor_builtin_func(t_px *px)
 {
 	int	exit_code;
 
-	redirections_setup(px->root_tree, px);
-	exit_code = builtin_functions(px->root_tree, NULL, px, TO_RETURN);
+	exit_code = redirections_setup(px->root_tree, px);
+	if (exit_code == EXIT_SUCCESS)
+		exit_code = builtin_functions(px->root_tree, NULL, px, TO_RETURN);
 	dup2(px->fd_stdin, STDIN_FILENO);
 	dup2(px->fd_stdout, STDOUT_FILENO);
 	close(px->fd_stdin);
@@ -351,6 +362,7 @@ void	exec_command(t_px *px, t_ast *cmd_node)
 	if (access(commands[0], F_OK) == 0)
 		execve_checker(NULL, commands, paths, px);
 	exec_command_free_aux(paths, commands, px);
+	printf("this must appear\n");
 	error_handler("command not found", NULL, 127, NULL);
 }
 
@@ -376,32 +388,27 @@ void	execve_checker(char *f_path, char **comms, char **paths, t_px *px)
 
 int executor_function(t_ast *root_tree)
 {
-	int		j;
-	int		num;
 	t_px	*px;
-	int		status;
+	int		exit_code;
 	
-	status = 0;
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
 	if (px->num_pipes == 0 && is_builtin(px->root_tree))
 		return (executor_builtin_func(px));
-	executor_aux(px, px->root_tree);
-	j = -1;
-	while (++j < px->num_pipes)
-	{
-		close(px->pipes[j][READ]);
-		close(px->pipes[j][WRITE]);
-	}
 	if (px->num_commands == 0)
-		redirections_setup(px->root_tree, px);
-	num = px->num_commands;
-	printf("This is num %i\n", num);
-	free_px(px);
-	if (num != 0 && WIFEXITED(status))
-		return (WEXITSTATUS(status));
-	return (EXIT_SUCCESS);
+	{
+		exit_code = redirections_setup(px->root_tree, px);
+		restore_fd(px);
+		free_px(px);
+		return (exit_code);
+	}
+	else
+	{
+		exit_code = executor_aux(px, px->root_tree);
+		free_px(px);
+		return (exit_code);
+	}
 }
 
 /* End of Executor Functions */
@@ -440,7 +447,7 @@ void	malloc_error_handler(void *ptr, int error_code)
 
 char	**commands_extractor(t_ast *cmd_node)
 {
-	t_ast	*temp;	
+	t_ast	*temp;
 	int		count;
 	char	**commands;
 
@@ -528,17 +535,6 @@ void	free_arrays(char **arrays)
 
 void	free_px(t_px *px)
 {
-	int	i;
-
-	if (px->pipes != NULL)
-	{
-		i = -1;
-		while (++i < px->num_pipes)
-			free(px->pipes[i]);
-		free(px->pipes);
-	}
-	if (px->pids != NULL)
-		free(px->pids);
 	free(px);
 }
 

@@ -156,20 +156,6 @@ int	count_number_commands(t_ast *root_tree)
 	return (total);
 }
 
-int	count_number_pipes(t_ast *root_tree)
-{
-	int	total;
-
-	total = 0;
-	if (root_tree == NULL)
-		return (0);
-	total += count_number_pipes(root_tree->left);
-	total += count_number_pipes(root_tree->right);
-	if (root_tree->type == '|')
-		total++;
-	return (total);
-}
-
 t_px	*initialize_px(t_ast *root_tree)
 {
 	t_px	*px;
@@ -177,7 +163,6 @@ t_px	*initialize_px(t_ast *root_tree)
 	px = malloc(sizeof(t_px));
 	malloc_error_handler(px, EXIT_FAILURE);
 	px->num_commands = count_number_commands(root_tree);
-	px->num_pipes = count_number_pipes(root_tree);
 	px->root_tree = root_tree;
 	px->fd_stdin = dup(STDIN_FILENO);
 	px->fd_stdout = dup(STDOUT_FILENO);
@@ -394,7 +379,7 @@ int executor_function(t_ast *root_tree)
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
-	if (px->num_pipes == 0 && is_builtin(px->root_tree))
+	if (is_builtin(px->root_tree))
 		return (executor_builtin_func(px));
 	if (px->num_commands == 0)
 	{

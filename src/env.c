@@ -19,13 +19,18 @@ void	update_env(char *env_to_change, char *new_env, char *to_free)
 	{
 		while (global->ev[++count])
 		{
-			if (ft_strncmp(env_to_change, global->ev[count], ft_strlen(env_to_change)) == 0)
+			if (ft_strncmp(env_to_change, global->ev[count], ft_strlen(env_to_change)) == 0
+					&& (global->ev[count][ft_strlen(env_to_change)] == 0
+					|| global->ev[count][ft_strlen(env_to_change)] == '='))
 				break;
 		}
 		if (global->ev[count])
 		{
-			free(global->ev[count]);
-			global->ev[count] = ft_strjoin(env_to_change, new_env);
+			if (ft_strlen(new_env) != 0)
+			{
+				free(global->ev[count]);
+				global->ev[count] = ft_strjoin(env_to_change, new_env);
+			}
 		}
 		else
 		{

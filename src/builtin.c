@@ -195,11 +195,15 @@ void	print_env_builtin(void)
 	int			i;
 
 	global = global_struct();
-	i = -1;
+	i = 0;
 	if (global->ev == NULL)
 		return;
-	while (global->ev[++i])
-		printf("%s\n", global->ev[i]);
+	while (global->ev[i])
+	{
+		if (ft_strnstr(global->ev[i], "=", ft_strlen(global->ev[i])) != NULL)
+			printf("%s\n", global->ev[i]);
+		i++;
+	}
 }
 
 int	export_builtin(t_ast *node)
@@ -215,8 +219,8 @@ int	export_builtin(t_ast *node)
 		es_pos = ft_strchr(node->data, '='); 
 		if (es_pos != NULL)
 		{
-			env_to_change = ft_substr(node->data, 0, es_pos - node->data + 1);
-			new_env = ft_substr(node->data, es_pos - node->data + 1, ft_strlen(node->data) - (es_pos - node->data + 1));
+			env_to_change = ft_substr(node->data, 0, es_pos - node->data);
+			new_env = ft_substr(node->data, es_pos - node->data, ft_strlen(node->data) - (es_pos - node->data));
 			update_env(env_to_change, new_env, env_to_change);
 			free(new_env);
 		}

@@ -40,7 +40,6 @@ typedef struct s_bp
 
 typedef struct s_px
 {
-	int		num_pipes;
 	int		num_commands;
 	int		fd_stdout;
 	int		fd_stdin;
@@ -170,7 +169,6 @@ int	open_fd(char *path, int option, t_px *px);
 int	write_line(char *limit, int fd, int fd_stdout);
 int	heredoc(char *limiter, t_px *px);
 int	count_number_commands(t_ast *root_tree);
-int	count_number_pipes(t_ast *root_tree);
 t_px	*initialize_px(t_ast *root_tree);
 int	executor_aux(t_px *px, t_ast *root);
 int	executor(t_px *px, t_ast *cmd_node);

@@ -1,6 +1,8 @@
 #include "../includes/minishell.h"
 
-/* TODO: terminal is wrapping aroung and going over the prompt*/
+/* TODO: 
+==> terminal is wrapping aroung and going over the prompt
+==> test all the builtin functions with the env variables unset */
 
 int	count_nodes(t_ast *root_tree)
 {
@@ -56,6 +58,7 @@ int	run_command(char *line)
 		return (EXIT_FAILURE);
 	}
 	free(line);
+
 	par = init_paser(lexer);
 	
 	root_tree = parser_function(par, 0);

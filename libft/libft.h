@@ -90,6 +90,7 @@ void	ft_lstclear(t_list **lst, void (*del)(void*));
 t_list	*ft_lstmap(t_list *lst, void *(*f)(void *), void (*del)(void *));
 void	ft_lstiter(t_list *lst, void (*f)(void *));
 void	ft_putstr_var_fd(char *s, int start, int end, int fd);
+void	ft_rmvchr(char *str, char *char_to_remove);
 
 /* Get Next line functions */
 char	*get_next_line(int fd);

@@ -10,7 +10,7 @@ void	init_lexer_aux(char *input, t_token_aux *aux, t_lexer *lexer)
 	lexer->first_token = init_token(lexer->first_token, aux->len_input);
 	lexer->count_token++;
 	aux->curr_token = lexer->first_token;
-	aux->status = DEF;
+	aux->status = CHAR_DEF;
 }
 
 t_token	*init_token(t_token *token, int len_input)
@@ -197,23 +197,6 @@ void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	}
 }
 
-void	handle_quote_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
-{
-	if (*f == 0 && (input[aux->i] == CHAR_QM || input[aux->i] == CHAR_DOLLAR))
-	{
-		if (aux->j != 0)
-		{
-			aux->curr_token->data[aux->j] = 0;
-			aux->j = 0;
-			aux->curr_token = add_token_back(lexer, aux->len_input);
-		}
-		aux->curr_token->data[aux->j] = input[aux->i];
-		aux->curr_token->type = input[aux->i];
-		aux->curr_token = add_token_back(lexer, aux->len_input);
-		(*f) = 1; 
-	}
-}
-
 void	handle_def_2char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 {
 	if (input[aux->i] == '>' && input[aux->i + 1] == '>')
@@ -266,18 +249,20 @@ void	handle_terminal(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 	}
 }
 
-void	handle_start_quote(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
+void	handle_start_quote(char *input, t_token_aux *aux, int *f)
 {
-	if (*f == 0 && (input[aux->i] == CHAR_QUOTE
-			|| input[aux->i] == CHAR_DQUOTE))
+	if (*f == 0 && input[aux->i] == CHAR_DQUOTE)
 	{
-		if (aux->j != 0)
-		{
-			aux->curr_token->data[aux->j] = 0;
-			aux->j = 0;
-			aux->curr_token = add_token_back(lexer, aux->len_input);
-		}
+		aux->curr_token->data[aux->j] = input[aux->i];
 		aux->status = input[aux->i];
+		aux->j++;
+		(*f)++;
+	}
+	else if (*f == 0 && input[aux->i] == CHAR_QUOTE)
+	{
+		aux->curr_token->data[aux->j] = input[aux->i];
+		aux->status = input[aux->i];
+		aux->j++;
 		(*f)++;
 	}
 }
@@ -290,7 +275,7 @@ void	process_char_def(char *input, t_token_aux *aux, t_lexer *lexer)
 	handle_def_2char(input, aux, lexer, &flag);
 	handle_def_1char(input, aux, lexer, &flag);
 	handle_terminal(input, aux, lexer, &flag);
-	handle_start_quote(input, aux, lexer, &flag);
+	handle_start_quote(input, aux, &flag);
 	if (flag == 0)
 	{
 		aux->curr_token->data[aux->j] = input[aux->i];
@@ -299,20 +284,23 @@ void	process_char_def(char *input, t_token_aux *aux, t_lexer *lexer)
 	}
 }
 
-void	process_char_quote(char *input, t_token_aux *aux, t_lexer *lexer)
+void	process_char_quote(char *input, t_token_aux *aux)
 {
 	if (input[aux->i] == '\\' && input[aux->i + 1] == aux->status)
 	{
+		aux->curr_token->data[(aux->j)++] = input[aux->i];
 		aux->curr_token->data[(aux->j)++] = input[aux->i + 1];
 		aux->i += 2;
 	}
 	if (input[aux->i] == aux->status)
 	{
-		aux->curr_token->type = aux->status;
-		aux->curr_token->data[aux->j] = 0;
-		aux->j = 0;
-		aux->status = DEF;
-		aux->curr_token = add_token_back(lexer, aux->len_input);
+		// if(input[aux->i] == CHAR_DQUOTE)
+		// {
+			aux->curr_token->data[aux->j] = input[aux->i];
+			aux->j++;
+		// }
+		aux->curr_token->type = CHAR_DEF;
+		aux->status = CHAR_DEF;
 	}
 	else
 	{
@@ -326,10 +314,10 @@ void	process_char(char *input, t_token_aux *aux, t_lexer *lexer)
 {
 	while (input[aux->i])
 	{
-		if (aux->status == DEF)
+		if (aux->status == CHAR_DEF)
 			process_char_def(input, aux, lexer);
 		else
-			process_char_quote(input, aux, lexer);
+			process_char_quote(input, aux);
 		aux->i++;
 	}
 }
@@ -392,6 +380,35 @@ void	insert_expansion(t_token *token, int sta, int len, char *mid_str)
 	token->data = final_str;
 }
 
+int	token_quote_removal(t_token *token, int *i, int *status, int quote_type)
+{
+	if (token->data[*i] == quote_type && *status == CHAR_DEF)
+	{
+		*status = quote_type;
+		ft_rmvchr(token->data, &token->data[*i]);
+		return (1);
+	}
+	else if (token->data[*i] == '\\' && token->data[*i + 1] == quote_type
+				&& *status == quote_type)
+	{
+		ft_rmvchr(token->data, &token->data[*i]);
+		(*i)++;
+		printf("%s: [%c]\n", token->data, token->data[*i]);
+		return (1);
+	}
+	else if (token->data[*i] == quote_type && *status == quote_type)
+	{
+		*status = CHAR_DEF;
+		ft_rmvchr(token->data, &token->data[*i]);
+		return (1);
+	}
+	return (0);
+}
+
+/* TODO: 
+===> create a new char* to hold the new version of the token after the expansion
+===> hold a status in that keeps track if you entered into a part between ''
+*/
 void	token_expansion_aux(t_token *token)
 {
 	char		*temp;
@@ -400,12 +417,18 @@ void	token_expansion_aux(t_token *token)
 	int			j;
 	int			len;
 	t_global	*global;
+	int			status;
 
 	i = 0;
 	j = 0;
 	global = global_struct();
+	status = CHAR_DEF;
 	while (token->data[i])
 	{
+		if(token_quote_removal(token, &i, &status, CHAR_QUOTE))
+			continue;
+		if(token_quote_removal(token, &i, &status, CHAR_DQUOTE))
+			continue;
 		j = 0;
 		if (token->data[i] == CHAR_DOLLAR 
 				&& token->data[i + 1] != 0
@@ -420,7 +443,10 @@ void	token_expansion_aux(t_token *token)
 				&& token->data[i + 1] != ' ')
 		{
 			while (token->data[i + 1 + j] != 0
-					&& token->data[i + 1 + j] != ' ')
+					&& token->data[i + 1 + j] != ' '
+					&& token->data[i + 1 + j] != '\"'
+					&& token->data[i + 1 + j] != '\''
+					&& token->data[i + 1 + j] != '\\')
 			{
 				j++;
 			}

@@ -43,10 +43,20 @@ void	terminal()
 	while (1)
 	{
 		pl->line = readline(pl->prompt);
-		if (pl->line == NULL)
+		if (g_sig_received == SIGINT)
+		{
+			//write(1, "\n", 1);
+			global_struct()->exit_code = 130;
+		}
+		else if (g_sig_received == SIGQUIT)
+		{
+			write(1, "Quit (core dumped)\n", 19);
+			global_struct()->exit_code = 131;
+		}
+		else if (pl->line == NULL)
 		{
 		    write(1, "exit\n", 5);
-		    free_global_struct();   // ou ce que tu utilises pour nettoyer
+		    free_global_struct();
 		    rl_clear_history();
 		    exit(0);
 		}
@@ -65,5 +75,6 @@ void	terminal()
 		else
 			add_history(pl->line);
 		run_command(pl->line);
+		g_sig_received = 0;
 	}
 }

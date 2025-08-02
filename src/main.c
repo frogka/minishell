@@ -1,5 +1,7 @@
 #include "../includes/minishell.h"
 
+int g_sig_received = 0;
+
 int main(int argc, char *argv[], char *envp[])
 {
 	(void)argv;
@@ -14,10 +16,10 @@ int main(int argc, char *argv[], char *envp[])
 	
 	sa.sa_handler = handler;      // On associe notre fonction au signal
 	sigemptyset(&sa.sa_mask);     // On ne bloque aucun autre signal pendant le handler
-	sa.sa_flags = 0;              // Pas d'option spéciale
+	sa.sa_flags = SA_RESTART;              // Pas d'option spéciale
 	
 	sigaction(SIGINT, &sa, NULL); // On applique ça au signal SIGINT
-    sigaction(SIGQUIT, &sa, NULL);
+    signal(SIGQUIT, SIG_IGN);
 	                
 	terminal();
 	return (0);

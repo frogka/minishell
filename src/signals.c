@@ -4,18 +4,32 @@
 #include <strings.h>
 #include <unistd.h>
 
+
 void	handler(int sig)
 {
 	if (sig == SIGINT)
 	{
+		g_sig_received = SIGINT;
 		write(1, "\n", 1);
-    	rl_on_new_line();              // readline sait qu'on est sur une nouvelle ligne
-    	rl_replace_line("", 0);       // remplace la ligne courante par rien
-    	rl_redisplay();               // réaffiche le prompt proprement
+		rl_on_new_line();              // readline sait qu'on est sur une nouvelle ligne
+		rl_replace_line("", 0);       // remplace la ligne courante par rien
+		rl_redisplay();               // réaffiche le prompt proprement
 	}
+	else if(sig == SIGQUIT)
+		g_sig_received = SIGQUIT;
+
     //else if (sig == SIGQUIT)
-		//write(1, "\nSIGQUIT reçu\n", 14);
+	//	return;
 }
+/*
+void handle_sigint(int sig)
+{
+	if (g_sig_received == SIGINT)
+	{
+		write(1, "\n", 1);
+		
+	}
+}*/
 /*
 int	main(void)
 {

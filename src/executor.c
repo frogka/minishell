@@ -255,6 +255,8 @@ int	executor(t_px *px, int i, t_ast *cmd_node)
 		exit(EXIT_FAILURE);
 	if (px->pids[i] == 0)
 	{
+		signal(SIGINT, SIG_DFL);
+		signal(SIGQUIT, SIG_DFL);
 		if (px->num_pipes !=0)
 		{
 			child_pipe_setup(px, i);
@@ -350,12 +352,13 @@ void	execve_checker(char *f_path, char **comms, char **paths, t_px *px)
 	}
 }
 
-int executor_function(t_ast *root_tree)
+int executor_function(t_ast *root_tree) //gere les parents??
 {
 	int		j;
 	int		num;
 	t_px	*px;
 	int		status;
+	int sig;
 	
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
@@ -371,14 +374,34 @@ int executor_function(t_ast *root_tree)
 	}
 	num = -1;
 	while (++num < px->num_commands)
+	{
 		waitpid(px->pids[num], &status, 0);
+		printf("status brut = %d\n", status);
+		printf("WIFSIGNALED(status) = %d\n", WIFSIGNALED(status));
+		printf("WTERMSIG(status) = %d\n", WTERMSIG(status));
+		if (WIFSIGNALED(status))
+		{
+			sig = WTERMSIG(status);
+			printf("sig: %d\n", sig);
+			if (sig == SIGQUIT)
+				write(1,  "Quit (core dumped)\n", 19);
+			global_struct()->exit_code = 128 + sig;
+		}
+		else if (WIFEXITED(status))
+		{
+			int code = WEXITSTATUS(status);
+			printf("exit normal, code = %d\n", code); // debug
+			global_struct()->exit_code = code;
+		}
+		printf("pas de signal, raw status = %d\n", status);
+	}
 	if (px->num_commands == 0)
 		redirections_setup(px->root_tree, px);
 	num = px->num_commands;	
 	free_px(px);
 	if (num != 0 && WIFEXITED(status))
-		return (WEXITSTATUS(status));
-	return (EXIT_SUCCESS);
+		return (global_struct()->exit_code);
+	return (global_struct()->exit_code);
 }
 
 /* End of Executor Functions */

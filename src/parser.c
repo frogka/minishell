@@ -4,6 +4,7 @@
 
 /* TODOS:
 '((echo this && echo that) || > ouput) echo cona' is giving back the tree (|| (&& (echo this) (echo that)) (> ouput))
+Heredoc performs expansions if the limiter does not have "". Thus, <<DATA expands env, but <<DATA"" does not.
 */
 
 void	print_ast_node(t_ast *node)
@@ -26,7 +27,6 @@ void	print_ast_sexpr(t_ast *root)
 		printf("()\n");
 		return;
 	}
-	
 	ast_to_sexpr(root);
 	printf("\n");
 }

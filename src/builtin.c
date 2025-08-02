@@ -1,5 +1,8 @@
 #include "../includes/minishell.h"
 
+/* TODO:
+==> Check If the export function is blocking variable names that should not be allowed */
+
 int	builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit)
 {
 	int	exit_code;

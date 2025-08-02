@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <termios.h>
 #include "../libft/libft.h"
 #define DEF 0
 #define LEFT 0
@@ -212,5 +214,10 @@ void	update_env(char *env_to_change, char *new_env, char *to_free);
 char	*find_ev(char *to_expand);
 void	remove_env(char *env_to_remove);
 void	remove_env_aux(int count);
+
+/* signals.c */
+void	sigint_handler(int signal);
+void	parent_signals(void);
+void	child_signals(void);
 
 #endif

@@ -233,6 +233,7 @@ int	executor_pipe(t_px *px, t_ast *root)
 	pids[0] = fork();
 	if (pids[0] == 0)
 	{
+		child_signals();
 		dup2(pipe_fd[WRITE], STDOUT_FILENO);
 		close(pipe_fd[READ]);
 		exit_code = execute_subshell(px, root->left);
@@ -241,6 +242,7 @@ int	executor_pipe(t_px *px, t_ast *root)
 	pids[1] = fork();
 	if (pids[1] == 0)
 	{
+		child_signals();
 		dup2(pipe_fd[READ], STDIN_FILENO);
 		close(pipe_fd[WRITE]);
 		exit_code = execute_subshell(px, root->right);
@@ -279,6 +281,7 @@ int	executor(t_px *px, t_ast *cmd_node)
 		exit(EXIT_FAILURE);
 	if (pid == 0)
 	{
+		child_signals();
 		status = redirections_setup(cmd_node, px);
 		if (status == EXIT_FAILURE)
 			exit (EXIT_FAILURE);		

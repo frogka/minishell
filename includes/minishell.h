@@ -30,6 +30,7 @@ typedef struct s_global
 {
 	int				exit_code;
 	char			**ev;
+	int in_readline;
 }					t_global;
 
 typedef struct s_bp

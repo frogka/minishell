@@ -246,7 +246,7 @@ void	executor_aux(t_px *px, t_ast *root)
 	
 }
 
-int	executor(t_px *px, int i, t_ast *cmd_node)
+int	executor(t_px *px, int i, t_ast *cmd_node) //manage childs
 {
 	int	j;
 
@@ -352,7 +352,7 @@ void	execve_checker(char *f_path, char **comms, char **paths, t_px *px)
 	}
 }
 
-int executor_function(t_ast *root_tree) //gere les parents??
+int executor_function(t_ast *root_tree) //manage parents
 {
 	int		j;
 	int		num;
@@ -375,10 +375,13 @@ int executor_function(t_ast *root_tree) //gere les parents??
 	num = -1;
 	while (++num < px->num_commands)
 	{
+		signal (SIGINT, SIG_IGN);
+		signal(SIGQUIT, SIG_IGN);
 		waitpid(px->pids[num], &status, 0);
-		printf("status brut = %d\n", status);
-		printf("WIFSIGNALED(status) = %d\n", WIFSIGNALED(status));
-		printf("WTERMSIG(status) = %d\n", WTERMSIG(status));
+		signal(SIGINT, handler);
+		//printf("status brut = %d\n", status);
+		//printf("WIFSIGNALED(status) = %d\n", WIFSIGNALED(status));
+		//printf("WTERMSIG(status) = %d\n", WTERMSIG(status));
 		if (WIFSIGNALED(status))
 		{
 			sig = WTERMSIG(status);
@@ -393,14 +396,16 @@ int executor_function(t_ast *root_tree) //gere les parents??
 			printf("exit normal, code = %d\n", code); // debug
 			global_struct()->exit_code = code;
 		}
-		printf("pas de signal, raw status = %d\n", status);
+		else 
+			printf("pas de signal, raw status = %d\n", status);
 	}
 	if (px->num_commands == 0)
 		redirections_setup(px->root_tree, px);
 	num = px->num_commands;	
 	free_px(px);
-	if (num != 0 && WIFEXITED(status))
-		return (global_struct()->exit_code);
+	//if (num != 0 && WIFEXITED(status))
+	//	return (global_struct()->exit_code);
+	//signal(SIGINT, handler);
 	return (global_struct()->exit_code);
 }
 

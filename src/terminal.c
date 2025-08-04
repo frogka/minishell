@@ -42,23 +42,19 @@ void	terminal()
 	pl->prompt = ft_strdup("\033[35m$minishell> \033[0m");
 	while (1)
 	{
+		global_struct()->in_readline = 1;
 		pl->line = readline(pl->prompt);
-		if (g_sig_received == SIGINT)
+		global_struct()->in_readline = 0;
+		if (pl->line == NULL)
 		{
-			//write(1, "\n", 1);
+			write(1, "exit\n", 5);
+			free_global_struct();
+			rl_clear_history();
+			exit(0);
+		}
+		else if (g_sig_received == SIGINT && !global_struct()->in_readline)
+		{
 			global_struct()->exit_code = 130;
-		}
-		else if (g_sig_received == SIGQUIT)
-		{
-			write(1, "Quit (core dumped)\n", 19);
-			global_struct()->exit_code = 131;
-		}
-		else if (pl->line == NULL)
-		{
-		    write(1, "exit\n", 5);
-		    free_global_struct();
-		    rl_clear_history();
-		    exit(0);
 		}
 		else if (ft_strlen(pl->line) == 4 && ft_strncmp(pl->line, "exit", 4) == 0)
 		{

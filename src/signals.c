@@ -25,6 +25,20 @@ void	handler(int sig)
     //else if (sig == SIGQUIT)
 	//	return;
 }
+
+
+// configure les signaux avant l'appel a terminal
+void init_signals(void)
+{
+	struct sigaction sa;
+	
+	sa.sa_handler = handler;      // On associe notre fonction au signal
+	sigemptyset(&sa.sa_mask);     // On ne bloque aucun autre signal pendant le handler
+	sa.sa_flags = SA_RESTART;              // Pas d'option spéciale
+	
+	sigaction(SIGINT, &sa, NULL); // On applique sa au signal SIGINT
+    signal(SIGQUIT, SIG_IGN);
+}
 /*
 void handle_sigint(int sig)
 {

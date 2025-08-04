@@ -236,6 +236,9 @@ char				*find_ev(char *to_expand);
 void				remove_env(char *env_to_remove);
 void				remove_env_aux(int count);
 
+/*signal.c*/
 void				handler(int sig);
+void init_signals(void);
+
 
 #endif

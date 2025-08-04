@@ -219,5 +219,7 @@ void	remove_env_aux(int count);
 void	sigint_handler(int signal);
 void	parent_signals(void);
 void	child_signals(void);
+void	ignore_signals(void);
+void	print_child_signals(int status);
 
 #endif

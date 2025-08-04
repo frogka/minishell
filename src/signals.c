@@ -13,14 +13,12 @@ void	sigint_handler(int signal)
 	global->exit_code = 130;
 }
 
-void	sigint_test(int signal)
+void	print_child_signals(int status)
 {
-	(void)signal;
-	write(1, "IN HEREREIJRPEIJREJR\n", 1);
-	rl_on_new_line();
-	rl_replace_line("", 0);
-	rl_redisplay();
-	write(1, "In Here\n", 8);
+	if (status == SIGINT)
+		write(1, "\n", 1);
+	else if (status == SIGQUIT)
+		write(1, "Quit: \n", 7);
 }
 
 void	parent_signals(void)
@@ -31,6 +29,12 @@ void	parent_signals(void)
 
 void	child_signals(void)
 {
-	signal(SIGINT, sigint_test);
+	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
+}
+
+void	ignore_signals(void)
+{
+	signal(SIGINT, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
 }

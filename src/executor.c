@@ -239,6 +239,7 @@ int	executor_pipe(t_px *px, t_ast *root)
 		exit_code = execute_subshell(px, root->left);
 		exit (exit_code);
 	}
+	ignore_signals();
 	pids[1] = fork();
 	if (pids[1] == 0)
 	{
@@ -251,9 +252,19 @@ int	executor_pipe(t_px *px, t_ast *root)
 	close(pipe_fd[READ]);
 	close(pipe_fd[WRITE]);
 	waitpid(pids[0], &status, 0);
+	if (WIFSIGNALED(status))
+		write(1, "\n",1);
 	waitpid(pids[1], &status, 0);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));
+	else if (WIFSIGNALED(status))
+	{
+		if (WTERMSIG(status) == SIGINT)
+			write(1, "\n", 1);
+		else if (WTERMSIG(status) == SIGQUIT)
+			write(1, "Quit: 3\n", 8);
+		return (WTERMSIG(status) + 128);
+	}
 	return (EXIT_FAILURE);
 }
 
@@ -290,9 +301,18 @@ int	executor(t_px *px, t_ast *cmd_node)
 		if (is_default_token(cmd_node->type))
 			exec_command(px, cmd_node);
 	}
+	ignore_signals();
 	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));
+	else if (WIFSIGNALED(status))
+	{
+		if (WTERMSIG(status) == SIGINT)
+			write(1, "\n", 1);
+		else if (WTERMSIG(status) == SIGQUIT)
+			write(1, "Quit: 3\n", 8);
+		return (WTERMSIG(status) + 128);
+	}
 	return (EXIT_FAILURE);
 }
 

@@ -209,6 +209,50 @@ void	print_env_builtin(void)
 	}
 }
 
+int	check_valid_export_aux(char *str)
+{
+	int	i;
+
+	if (ft_isdigit(str[0]))
+		return (EXIT_FAILURE);
+	i = -1;
+	while (str[++i])
+	{
+		if(!ft_isalnum(str[i]) && str[i] != '_')
+			return (EXIT_FAILURE);
+	}
+	return (EXIT_SUCCESS);
+}
+
+int	check_valid_export(char *str)
+{
+	char	*es_pos;
+	char	*env_to_change;
+
+	if (str[0] == '=')
+	{
+		ft_putstr_fd("minishell: export: `", STDERR_FILENO);
+		ft_putstr_fd("=", STDERR_FILENO);
+		ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
+		return (EXIT_FAILURE);
+	}
+	es_pos = ft_strchr(str, '='); 
+	if (es_pos != NULL)
+		env_to_change = ft_substr(str, 0, es_pos - str);
+	else
+		env_to_change = str;
+	if (check_valid_export_aux(env_to_change) == EXIT_FAILURE)
+	{
+		ft_putstr_fd("minishell: export: `", STDERR_FILENO);
+		ft_putstr_fd(env_to_change, STDERR_FILENO);
+		ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
+		if (es_pos != NULL)
+			free(env_to_change);		
+		return (EXIT_FAILURE);
+	}
+	return (EXIT_SUCCESS);
+}
+
 int	export_builtin(t_ast *node)
 {
 	char	*es_pos;
@@ -219,6 +263,8 @@ int	export_builtin(t_ast *node)
 		print_export_builtin();
 	while (node)
 	{
+		if (check_valid_export(node->data) == EXIT_FAILURE)
+			return (EXIT_FAILURE);
 		es_pos = ft_strchr(node->data, '='); 
 		if (es_pos != NULL)
 		{

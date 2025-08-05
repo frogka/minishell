@@ -431,7 +431,8 @@ void	token_expansion_aux(t_token *token)
 		j = 0;
 		if (token->data[i] == CHAR_DOLLAR 
 				&& token->data[i + 1] != 0
-				&& token->data[i + 1] == '?')
+				&& token->data[i + 1] == '?'
+				&& status != CHAR_QUOTE)
 		{
 			temp = ft_itoa(global->exit_code);
 			len = ft_strlen(temp);
@@ -439,7 +440,9 @@ void	token_expansion_aux(t_token *token)
 		}
 		else if (token->data[i] == CHAR_DOLLAR 
 				&& token->data[i + 1] != 0
-				&& token->data[i + 1] != ' ')
+				&& token->data[i + 1] != ' '
+				&& token->data[i + 1] != CHAR_DQUOTE
+				&& status != CHAR_QUOTE)
 		{
 			while (token->data[i + 1 + j] != 0
 					&& token->data[i + 1 + j] != ' '

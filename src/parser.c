@@ -280,7 +280,7 @@ t_ast	*parse_simple_command(t_parser *par)
 	{
 		if (token_prev && (is_default_token(token_prev->type) || is_redirect_token(token_prev->type)) &&  par->curr_token->type == CHAR_OPAREN)
 		{
-			printf("syntax error near unexpected token `('\n");
+			ft_putstr_fd("syntax error near unexpected token `('\n", STDERR_FILENO);
 			return (NULL);
 		}
 		else if (is_redirect_token(par->curr_token->type))
@@ -289,7 +289,7 @@ t_ast	*parse_simple_command(t_parser *par)
 			par->curr_token = par->curr_token->next;
 			if (!is_default_token(par->curr_token->type))
 			{
-				printf("Error: syntax error near unexpecter token `newline'");
+				ft_putstr_fd("Error: syntax error near unexpecter token `newline'", STDERR_FILENO);
 				return (NULL);
 			}
 			file = create_ast_node(CHAR_DEF, par->curr_token->data);
@@ -335,7 +335,9 @@ int	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_no
 			break ;
 		else if ((is_default_token(par->curr_token->type) || is_redirect_token(par->curr_token->type)) && ((*l_node)->type == CHAR_AND || (*l_node)->type == CHAR_OR))
 		{
-			printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->data);
+			ft_putstr_fd("minishell: syntax error near unexpected token `", STDERR_FILENO);
+			ft_putstr_fd(par->curr_token->data, STDERR_FILENO);
+			ft_putstr_fd("'\n", STDERR_FILENO);
 			return (EXIT_FAILURE);
 		}
 		infix_binding_power(par->curr_token->type, &bp);
@@ -347,7 +349,7 @@ int	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_no
 			par->curr_token = par->curr_token->next;
 			if (par->curr_token == NULL || par->curr_token->type == CHAR_CPAREN)
 			{
-				printf("Error: Binary operator missing right operand\n");
+				ft_putstr_fd("Error: Binary operator missing right operand\n",STDERR_FILENO);
 				return (EXIT_FAILURE);
 			}
 			
@@ -371,10 +373,7 @@ t_ast	*parser_function(t_parser *par, int min_bp)
 	r_node = NULL;
 	l_node = parse_simple_command(par);
 	if (l_node == NULL)
-	{
-		// printf("minishell: syntax error near unexpected token `%s'\n", par->curr_token->content);
 		return (NULL);
-	}
 	if (parser_function_loop(par, min_bp, &l_node, &r_node) == EXIT_FAILURE)
 		return (NULL);
 	return (l_node);

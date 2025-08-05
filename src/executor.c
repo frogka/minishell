@@ -123,7 +123,9 @@ int	redirections_setup(t_ast *root, t_px *px)
 			if (fd == -1)
 			{
 				restore_fd(px);
-				printf("minishell: %s: No such file or directory\n", root->right->data);
+				ft_putstr_fd("minishell: ", STDERR_FILENO);
+				ft_putstr_fd(root->right->data, STDERR_FILENO);
+				ft_putstr_fd(": No such file or directory\n", STDERR_FILENO);
 				return (EXIT_FAILURE);
 			}
 			redirections_files_setup(fd, root->type, num_output_fd);

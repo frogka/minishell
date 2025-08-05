@@ -99,7 +99,7 @@ int	check_matching_quotes(char *input)
 	}
 	if (counter > 0)
 	{
-		printf("Error: Unclosed quotation detected\n");
+		ft_putstr_fd("Error: Unclosed quotation detected\n", STDERR_FILENO);
 		return (EXIT_FAILURE);
 	}
 	return (EXIT_SUCCESS);
@@ -122,14 +122,14 @@ int	check_matching_parenthesis(t_lexer *lexer)
 			counter++;
 		if (counter < 0)
 		{
-			printf("Error: Invalid Parenthesis\n");
+			ft_putstr_fd("Error: Invalid Parenthesis\n", STDERR_FILENO);
 			return (EXIT_FAILURE);
 		}
 		curr_token = curr_token->next;
 	}
 	if (counter != 0)
 	{
-		printf("Error: Invalid Parenthesis\n");
+		ft_putstr_fd("Error: Invalid Parenthesis\n", STDERR_FILENO);
 		return (EXIT_FAILURE);
 	}
 	return (EXIT_SUCCESS);
@@ -393,7 +393,6 @@ int	token_quote_removal(t_token *token, int *i, int *status, int quote_type)
 	{
 		ft_rmvchr(token->data, &token->data[*i]);
 		(*i)++;
-		printf("%s: [%c]\n", token->data, token->data[*i]);
 		return (1);
 	}
 	else if (token->data[*i] == quote_type && *status == quote_type)

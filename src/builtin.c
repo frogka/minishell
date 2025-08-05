@@ -255,7 +255,7 @@ int	env_builtin(t_ast *node)
 	}
 	else
 	{
-		printf("env: no options or arguments allowed\n");
+		ft_putstr_fd("env: no options or arguments allowed\n", STDERR_FILENO);
 		return (EXIT_FAILURE);
 	}
 }

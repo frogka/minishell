@@ -5,6 +5,8 @@
 /* TODOS:
 '((echo this && echo that) || > ouput) echo cona' is giving back the tree (|| (&& (echo this) (echo that)) (> ouput))
 Heredoc performs expansions if the limiter does not have "". Thus, <<DATA expands env, but <<DATA"" does not.
+==> && && command does not work properly
+
 */
 
 void	print_ast_node(t_ast *node)
@@ -130,9 +132,6 @@ int	is_redirect_token(int type)
 int	is_operator_token(int type)
 {
 	if (type == CHAR_PIPE
-		|| type == CHAR_AMPERSAND
-		|| type == CHAR_DOLLAR
-		|| type == CHAR_QM
 		|| type == CHAR_AND
 		|| type == CHAR_OR)
 	{
@@ -333,7 +332,7 @@ int	parser_function_loop(t_parser *par, int min_bp, t_ast **l_node, t_ast **r_no
 	{
 		if (par->curr_token == NULL || par->curr_token->type == CHAR_CPAREN)
 			break ;
-		else if ((is_default_token(par->curr_token->type) || is_redirect_token(par->curr_token->type)) && ((*l_node)->type == CHAR_AND || (*l_node)->type == CHAR_OR))
+		else if ((is_default_token(par->curr_token->type) || is_redirect_token(par->curr_token->type)) && ((*l_node)->type == CHAR_AND || (*l_node)->type == CHAR_OR)) // to check better what is it doing
 		{
 			ft_putstr_fd("minishell: syntax error near unexpected token `", STDERR_FILENO);
 			ft_putstr_fd(par->curr_token->data, STDERR_FILENO);

@@ -79,6 +79,7 @@ int	check_matching_quotes(char *input)
 	int		counter;
 	char	quote_type;
 
+	
 	i = 0;
 	counter = 0;
 	while (input[i])
@@ -191,6 +192,7 @@ void	handle_def_1char(char *input, t_token_aux *aux, t_lexer *lexer, int *f)
 			aux->curr_token = add_token_back(lexer, aux->len_input);
 		}
 		aux->curr_token->data[aux->j] = input[aux->i];
+		aux->curr_token->data[aux->j + 1] = 0;
 		aux->curr_token->type = input[aux->i];
 		aux->curr_token = add_token_back(lexer, aux->len_input);
 		(*f)++;
@@ -294,11 +296,8 @@ void	process_char_quote(char *input, t_token_aux *aux)
 	}
 	if (input[aux->i] == aux->status)
 	{
-		// if(input[aux->i] == CHAR_DQUOTE)
-		// {
-			aux->curr_token->data[aux->j] = input[aux->i];
-			aux->j++;
-		// }
+		aux->curr_token->data[aux->j] = input[aux->i];
+		aux->j++;
 		aux->curr_token->type = CHAR_DEF;
 		aux->status = CHAR_DEF;
 	}

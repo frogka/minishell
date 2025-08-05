@@ -130,14 +130,16 @@ int	cd_builtin(t_ast *node)
 		if (home[0] == 0)
 		{
 			free(home);
-			error_handler("cd: HOME not set", NULL, EXIT_FAILURE, NULL);
+			ft_putstr_fd("cd: HOME not set\n", STDERR_FILENO);
+			return (EXIT_FAILURE);
 		}
 		else
 		{
 			if (chdir(home) == -1)
 			{
 				free(home);
-				error_handler("cd: Path is not valid", NULL, EXIT_FAILURE, NULL);
+				ft_putstr_fd("cd: No such file or directory\n", STDERR_FILENO);
+				return (EXIT_FAILURE);
 			}
 			else
 			{
@@ -150,7 +152,10 @@ int	cd_builtin(t_ast *node)
 	else if (count == 1)
 	{
 		if (chdir(initial_node->data) == -1)
-			error_handler("cd: Path is not valid", NULL, EXIT_FAILURE, NULL);
+		{
+			ft_putstr_fd("cd: No such file or directory\n", STDERR_FILENO);
+			return (EXIT_FAILURE);
+		}
 		else
 		{
 			update_env("OLDPWD=", buffer, NULL);
@@ -158,8 +163,7 @@ int	cd_builtin(t_ast *node)
 			return (EXIT_SUCCESS);
 		}
 	}
-	else
-		error_handler("cd: Too many arguments", NULL, EXIT_FAILURE, NULL);
+	ft_putstr_fd("cd: too many arguments\n", STDERR_FILENO);
 	return (EXIT_FAILURE);
 }
 

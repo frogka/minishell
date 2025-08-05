@@ -192,7 +192,7 @@ int	executor_aux(t_px *px, t_ast *root)
 		return (executor_pipe(px, root));
 	}
 	else if (root->type == CHAR_AMPERSAND || root->type == CHAR_DOLLAR
-			|| root->type == CHAR_QM)
+			|| root->type == CHAR_QM) // To check if we can remove
 	{
 		executor_aux(px, root->left);
 		executor_aux(px, root->right);
@@ -264,7 +264,7 @@ int	executor_pipe(t_px *px, t_ast *root)
 		if (WTERMSIG(status) == SIGINT)
 			write(1, "\n", 1);
 		else if (WTERMSIG(status) == SIGQUIT)
-			write(1, "Quit: 3\n", 8);
+			write(1, "Quit (core dumped)\n", 19);
 		return (WTERMSIG(status) + 128);
 	}
 	return (EXIT_FAILURE);
@@ -312,7 +312,7 @@ int	executor(t_px *px, t_ast *cmd_node)
 		if (WTERMSIG(status) == SIGINT)
 			write(1, "\n", 1);
 		else if (WTERMSIG(status) == SIGQUIT)
-			write(1, "Quit: 3\n", 8);
+			write(1, "Quit (core dumped)\n", 19);
 		return (WTERMSIG(status) + 128);
 	}
 	return (EXIT_FAILURE);

@@ -88,33 +88,22 @@ void	terminal()
 		if (isatty(STDIN_FILENO))
 		{
 			pl->line = readline(pl->prompt);
+			pl->input_type = INTERACTIVE_MODE;
 			if (pl->line == NULL)
-			{
-				rl_clear_history();
-				free_global_struct();
-				printf("exit\n");
-				exit_builtin();
-			}
+				exit_builtin(NULL);
 		}
 		else
 		{
 			pl->line = get_next_line(STDIN_FILENO);
+			pl->input_type = NONINTERACTIVE_MODE;
 			if (pl->line == NULL)
 			{
-				free_global_struct();
-				exit_builtin();
+				exit_builtin(NULL);
 			}
 			if (pl->line[ft_strlen(pl->line) - 1] == '\n')
 				pl->line[ft_strlen(pl->line) - 1] = 0;
 		}
-		if (ft_strncmp(pl->line, "exit", 4) == 0)
-		{
-			rl_clear_history();
-			free_global_struct();
-			free(pl->line);
-			exit_builtin();
-		}
-		else if (ft_strlen(pl->line) > 0 && check_only_terminal(pl->line))
+		if (ft_strlen(pl->line) > 0 && check_only_terminal(pl->line))
 		{
 			free(pl->line);
 			continue;

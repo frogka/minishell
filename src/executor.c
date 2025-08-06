@@ -288,6 +288,8 @@ int	executor(t_px *px, t_ast *cmd_node)
 	int	status;
 	int	pid;
 
+	if (is_builtin(px->root_tree))
+		return (executor_builtin_func(px));
 	pid = fork();
 	status = 0;
 	if (pid == -1)
@@ -330,7 +332,7 @@ int	executor_builtin_func(t_px *px)
 	dup2(px->fd_stdout, STDOUT_FILENO);
 	close(px->fd_stdin);
 	close(px->fd_stdout);
-	free_px(px);
+	// free_px(px);
 	return (exit_code);
 }
 
@@ -403,8 +405,6 @@ int executor_function(t_ast *root_tree)
 	if (root_tree == NULL)
 		return (EXIT_FAILURE);
 	px = initialize_px(root_tree);
-	if (is_builtin(px->root_tree))
-		return (executor_builtin_func(px));
 	if (px->num_commands == 0)
 	{
 		exit_code = redirections_setup(px->root_tree, px);

@@ -55,7 +55,7 @@ int	builtin_execution(t_ast *n)
 	else if (ft_strncmp("env", n->data, 3) == 0 && ft_strlen(n->data) == 3)
 		return (env_builtin(n->left));
 	else if (ft_strncmp("exit", n->data, 4) == 0 && ft_strlen(n->data) == 4)
-		return (exit_builtin());
+		return (exit_builtin(n->left));
 	else
 		return(NO_BUILTIN);
 }
@@ -174,13 +174,86 @@ t_prompt_line	*to_prompt_line_struct(void)
 	return (&pl);
 }
 
-int	exit_builtin(void)
+int	ft_a_to_exitcode(const char *nptr, int *total)
+{
+	int	i;
+	int	sign;
+
+	i = 0;
+	sign = 1;
+	if (nptr[i] == '-')
+	{
+		sign *= -1;
+		i++;
+	}
+	else if (nptr[i] == '+')
+		i++;
+	while (nptr[i])
+	{
+		if (nptr[i] >= '0' && nptr[i] <= '9')
+			*total = *total * 10 + nptr[i] - '0';
+		else
+			return (EXIT_FAILURE);
+		i++;
+	}
+	*total = *total * sign;
+	*total = (unsigned char) *total;
+	return (EXIT_SUCCESS);
+}
+
+void	exit_builtin_aux(t_ast *node, int *exit_code)
+{
+	int				count;
+
+	count = 0;
+	if (ft_a_to_exitcode(node->data, exit_code))
+	{
+		ft_putstr_fd("minishell: exit: ", STDERR_FILENO);
+		ft_putstr_fd(node->data, STDERR_FILENO);
+		ft_putstr_fd(" numeric argument required\n", STDERR_FILENO);
+		free_global_struct();
+		free_struct_to_free();
+		exit(EXIT_FAILURE);
+	}
+	while (node)
+	{
+		count++;
+		node = node->left;
+	}
+	if (count > 1)
+	{
+		ft_putstr_fd("minishell: exit: too many arguments\n", STDERR_FILENO);
+		free_global_struct();
+		free_struct_to_free();
+		exit(EXIT_FAILURE);
+	}
+}
+
+int	exit_builtin(t_ast *node)
 {
 	t_prompt_line	*pl;
+	int				exit_code;
 
 	pl = to_prompt_line_struct();
-	free(pl->prompt);
-	exit(EXIT_SUCCESS);
+	if (node == NULL && pl->input_type == NONINTERACTIVE_MODE)
+		exit(EXIT_SUCCESS);
+	if (pl->input_type == INTERACTIVE_MODE)
+	{
+		free(pl->prompt);
+		rl_clear_history();
+		printf("exit\n");
+	}
+	if (node == NULL)
+	{
+		free_global_struct();
+		free_struct_to_free();
+		exit(EXIT_SUCCESS);
+	}
+	exit_code = 0;
+	exit_builtin_aux(node, &exit_code);
+	free_global_struct();
+	free_struct_to_free();
+	exit(exit_code);
 }
 
 void	print_export_builtin(void)

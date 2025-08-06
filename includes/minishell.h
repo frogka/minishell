@@ -19,6 +19,8 @@
 #define	NO_BUILTIN 69420
 #define TO_RETURN 0
 #define TO_EXIT 1
+#define INTERACTIVE_MODE 0
+#define NONINTERACTIVE_MODE 1
 
 typedef	struct s_ast
 {
@@ -114,6 +116,7 @@ typedef	struct s_prompt_line
 {
 	char	*prompt;
 	char	*line;
+	int		input_type;
 }	t_prompt_line;
 
 /* lexer.c */
@@ -200,7 +203,7 @@ int		builtin_functions(t_ast *node, char **comms, t_px *px, int to_exit);
 int		is_builtin(t_ast *n);
 int		echo_builtin(t_ast *node);
 int		cd_builtin(t_ast *node);
-int		exit_builtin(void);
+int		exit_builtin(t_ast *node);
 int		export_builtin(t_ast *node);
 void	remove_env(char *env_to_remove);
 void	remove_env_aux(int count);
